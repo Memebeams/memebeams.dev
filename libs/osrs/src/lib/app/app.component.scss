@@ -1,0 +1,200 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+:root {
+  --width: calc(76px + 33px * 7);
+}
+
+.container {
+  display: flex;
+  margin: 0 auto;
+  position: relative;
+  width: var(--width);
+}
+
+@media (orientation: landscape) {
+  .border {
+    border-image-width: 71px 38px;
+  }
+
+  .content {
+    padding: 35px 25px 36px 25px;
+  }
+
+  @media screen and (max-width: 504px) {
+    .container {
+      --width: calc(76px + 33px * 7);
+    }
+  }
+
+  @media screen and (min-width: 505px) {
+    .container {
+      --width: calc(76px + 33px * 9);
+    }
+  }
+
+  @media screen and (min-width: 571px) {
+    .container {
+      --width: calc(76px + 33px * 11);
+    }
+  }
+
+  @media screen and (min-width: 637px) {
+    .container {
+      --width: calc(76px + 33px * 13);
+    }
+  }
+
+  @media screen and (min-width: 703px) {
+    .container {
+      --width: calc(76px + 33px * 15);
+    }
+  }
+
+  @media screen and (min-width: 769px) {
+    .container {
+      --width: calc(76px + 33px * 17);
+    }
+  }
+
+  @media screen and (min-width: 835px) {
+    .container {
+      --width: calc(76px + 33px * 19);
+    }
+  }
+
+  @media screen and (min-width: 901px) {
+    .container {
+      --width: calc(76px + 33px * 21);
+    }
+  }
+
+  @media screen and (min-width: 967px) {
+    .container {
+      --width: calc(76px + 33px * 23);
+    }
+  }
+
+  @media screen and (min-width: 1033px) {
+    .container {
+      --width: calc(76px + 33px * 25);
+    }
+  }
+
+  @media screen and (min-width: 1099px) {
+    .container {
+      --width: calc(76px + 33px * 27);
+    }
+  }
+
+  @media screen and (min-width: 1165px) {
+    .container {
+      --width: calc(76px + 33px * 29);
+    }
+  }
+
+  @media screen and (min-width: 1231px) {
+    .container {
+      --width: calc(76px + 33px * 31);
+    }
+  }
+}
+
+@media (orientation: portrait) {
+  .border {
+    border-image-width: 106px 52px;
+  }
+
+  .content {
+    padding: 54px 35px 54px 35px;
+  }
+
+  @media screen and (max-width: 546px) {
+    .container {
+      --width: calc(106px + 49px * 5);
+    }
+  }
+
+  @media screen and (min-width: 547px) {
+    .container {
+      --width: calc(106px + 49px * 7);
+    }
+  }
+
+  @media screen and (min-width: 645px) {
+    .container {
+      --width: calc(106px + 49px * 9);
+    }
+  }
+
+  @media screen and (min-width: 743px) {
+    .container {
+      --width: calc(106px + 49px * 11);
+    }
+  }
+
+  @media screen and (min-width: 841px) {
+    .container {
+      --width: calc(106px + 49px * 13);
+    }
+  }
+
+  @media screen and (min-width: 939px) {
+    .container {
+      --width: calc(106px + 49px * 15);
+    }
+  }
+
+  @media screen and (min-width: 1037) {
+    .container {
+      --width: calc(106px + 49px * 17);
+    }
+  }
+
+  @media screen and (min-width: 1135) {
+    .container {
+      --width: calc(106px + 49px * 19);
+    }
+  }
+
+  @media screen and (min-width: 1233) {
+    .container {
+      --width: calc(106px + 49px * 21);
+    }
+  }
+}
+
+.border {
+  pointer-events: none;
+  box-sizing: border-box;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-image-source: url(./border_transparent.png);
+  border-image-slice: 71 38;
+  border-style: solid;
+  border-top-width: 71px;
+  border-bottom-width: 71px;
+  border-left-width: 38px;
+  border-right-width: 38px;
+  border-image-repeat: repeat;
+  z-index: 100;
+}
+
+.background {
+  pointer-events: none;
+  background-color: rgb(62, 53, 41, 0.5);
+  position: absolute;
+  margin: 10px;
+  width: calc(100% - 20px);
+  height: calc(100% - 20px);
+  box-sizing: border-box;
+  z-index: -100;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+}

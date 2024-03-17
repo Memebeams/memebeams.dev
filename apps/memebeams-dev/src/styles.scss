@@ -1,1 +1,20 @@
 /* You can add global styles to this file, and also import other style files */
+@font-face {
+  font-family: 'Runescape';
+  src: url(./assets/RuneScape-Chat-07.woff) format('woff');
+}
+
+@font-face {
+  font-family: 'Runescape Detailed';
+  src: url(./assets/RuneScape-NPC-Chat.woff) format('woff');
+}
+
+body {
+  margin: 0;
+  font-family: 'Runescape';
+  background-image: url(./assets/hd_bg_1.png);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  height: 100vh;
+}
