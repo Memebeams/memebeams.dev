@@ -1,0 +1,56 @@
+:host {
+  position: relative;
+  width: 200px;
+
+  &.wide {
+    width: 100%;
+  }
+
+  @media (orientation: landscape) {
+    width: 200px;
+
+    &.wide {
+      width: 300px;
+    }
+  }
+}
+
+.background {
+  pointer-events: none;
+  background-color: rgb(62, 53, 41);
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  z-index: -5;
+}
+
+.border {
+  pointer-events: none;
+  position: absolute;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  border-image-source: url(./panel.png);
+  border-image-slice: 7 8 8 7;
+  border-image-repeat: repeat;
+  border-style: solid;
+  border-width: 8px;
+  z-index: 5;
+
+  &.wide {
+    border-width: 8px 0;
+  }
+
+  @media (orientation: landscape) {
+    border-width: 8px;
+
+    &.wide {
+      border-width: 8px;
+    }
+  }
+}
+
+.content {
+  text-align: center;
+  padding: 8px;
+}

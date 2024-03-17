@@ -1,10 +1,19 @@
 import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { NxWelcomeComponent } from './nx-welcome.component';
+import {
+  OSRSAppComponent,
+  OSRSPanelComponent,
+  OSRSTextComponent,
+} from '@memebeams-dev/osrs';
 
 @Component({
   standalone: true,
-  imports: [NxWelcomeComponent, RouterModule],
+  imports: [
+    OSRSAppComponent,
+    OSRSTextComponent,
+    OSRSPanelComponent,
+    RouterModule,
+  ],
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',

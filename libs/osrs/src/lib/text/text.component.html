@@ -1,0 +1,10 @@
+<p
+  #text
+  [ngStyle]="{ color }"
+  [ngClass]="{
+    'standard': font === 'standard',
+    'fancy': font === 'fancy',
+  }"
+>
+  <ng-content></ng-content>
+</p>
