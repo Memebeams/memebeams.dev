@@ -3,7 +3,7 @@ import { Component, inject } from '@angular/core';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { RxFor } from '@rx-angular/template/for';
 import { RxLet } from '@rx-angular/template/let';
-import { filter, map, tap } from 'rxjs';
+import { filter, map } from 'rxjs';
 import { OSRSTooltipDirective } from '../tooltip/tooltip.directive';
 
 export interface OSRSButton {
@@ -32,17 +32,11 @@ export class OSRSButtonsComponent {
       alt: 'Home',
       path: '/',
     },
-    {
-      icon: 'bounty',
-      alt: 'Bounty',
-      path: 'bounty',
-    },
   ];
 
   buttons$ = this.router.events.pipe(
     filter((event): event is NavigationEnd => event instanceof NavigationEnd),
     map((event) => event.url),
-    tap(console.log),
     map((path) =>
       this.buttons.map((button) => ({
         ...button,
