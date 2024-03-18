@@ -18,13 +18,20 @@
         "inlineStyleLanguage": "scss",
         "assets": [
           "apps/memebeams-dev/src/favicon.ico",
-          "apps/memebeams-dev/src/assets"
+          "apps/memebeams-dev/src/assets",
+          "apps/memebeams-dev/src/android-chrome-192x192.png",
+          "apps/memebeams-dev/src/android-chrome-512x512.png",
+          "apps/memebeams-dev/src/apple-touch-icon.png",
+          "apps/memebeams-dev/src/favicon-16x16.png",
+          "apps/memebeams-dev/src/favicon-32x32.png",
+          "apps/memebeams-dev/src/site.webmanifest"
         ],
         "styles": ["apps/memebeams-dev/src/styles.scss"],
         "scripts": []
       },
       "configurations": {
         "production": {
+          "baseHref": "https://memebeams.github.io/memebeams.dev/",
           "budgets": [
             {
               "type": "initial",
