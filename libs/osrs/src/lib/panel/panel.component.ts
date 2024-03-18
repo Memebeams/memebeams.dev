@@ -10,5 +10,10 @@ import { OSRSTextComponent } from '../text/text.component';
   styleUrl: './panel.component.scss',
 })
 export class OSRSPanelComponent {
-  @Input() @HostBinding('class.wide') wide = false;
+  @HostBinding('class.wide') wide = false;
+  @HostBinding('class.full') full = false;
+  @Input() set width(value: 'narrow' | 'wide' | 'full') {
+    this.wide = value === 'wide';
+    this.full = value === 'full';
+  }
 }

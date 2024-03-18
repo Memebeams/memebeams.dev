@@ -1,16 +1,16 @@
 {
-  "name": "osrs",
+  "name": "clan",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/osrs/src",
-  "prefix": "rs",
-  "tags": ["osrs"],
+  "sourceRoot": "libs/clan/src",
+  "prefix": "lib",
+  "tags": ["clan"],
   "projectType": "library",
   "targets": {
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "libs/osrs/jest.config.ts"
+        "jestConfig": "libs/clan/jest.config.ts"
       }
     },
     "lint": {

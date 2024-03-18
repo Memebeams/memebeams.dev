@@ -1,0 +1,13 @@
+<nav class="container" *rxLet="buttons$; let buttons">
+  <ng-container *rxFor="let button of buttons">
+    <a href="#" [rsTooltip]="button.alt" [routerLink]="button.path"
+      ><img [src]="button.src" [alt]="button.alt"
+    /></a>
+  </ng-container>
+  <img
+    class="spacer"
+    src="assets/buttons/cell.png"
+    alt="Brick"
+    *ngIf="buttons.length % 2 === 0"
+  />
+</nav>

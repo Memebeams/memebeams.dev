@@ -1,0 +1,16 @@
+<ng-container *rxLet="viewModel$; let vm">
+  <div
+    class="tooltip"
+    *ngIf="vm.tooltip"
+    [ngStyle]="{
+      'top.px': vm.position.y + 25,
+      'left.px': vm.position.x
+    }"
+  >
+    <div class="inner-border">
+      <rs-text style="text-shadow: 1px 1px black">
+        {{ vm.tooltip }}
+      </rs-text>
+    </div>
+  </div>
+</ng-container>
