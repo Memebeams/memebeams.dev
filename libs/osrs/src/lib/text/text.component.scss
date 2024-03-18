@@ -1,3 +1,45 @@
-p.standard {
-  font-family: 'Runescape';
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+}
+
+p {
+  &.standard {
+    font-family: 'Runescape';
+  }
+
+  &.fancy {
+    font-family: 'Runescape Detailed';
+    font-size: 2rem;
+    line-height: 1rem;
+  }
+}
+
+h1 {
+  &.standard {
+    font-family: 'Runescape';
+  }
+
+  &.fancy {
+    font-family: 'Runescape Detailed';
+    font-size: 4rem;
+    line-height: 2rem;
+  }
+}
+
+h2 {
+  &.standard {
+    font-family: 'Runescape';
+  }
+
+  &.fancy {
+    font-family: 'Runescape Detailed';
+    font-size: 3rem;
+    line-height: 1.5rem;
+  }
 }

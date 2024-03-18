@@ -180,7 +180,7 @@
   border-left-width: 38px;
   border-right-width: 38px;
   border-image-repeat: repeat;
-  z-index: 100;
+  z-index: 50;
 }
 
 .background {
@@ -191,10 +191,11 @@
   width: calc(100% - 20px);
   height: calc(100% - 20px);
   box-sizing: border-box;
-  z-index: -100;
+  z-index: -50;
 }
 
 .content {
   display: flex;
   flex-direction: column;
+  width: 100%;
 }

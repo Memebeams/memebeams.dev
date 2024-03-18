@@ -1,0 +1,13 @@
+.tooltip {
+  z-index: 1000;
+  position: absolute;
+  border: 1px solid rgb(58, 50, 41);
+  border-width: 1px;
+  background-color: rgba(83, 72, 59, 0.5);
+}
+
+.inner-border {
+  border: 1px solid rgb(83, 72, 59);
+  border-width: 1px;
+  padding: 0 2px;
+}

@@ -1,10 +1,38 @@
-<p
-  #text
-  [ngStyle]="{ color }"
-  [ngClass]="{
+<ng-container [ngSwitch]="tag">
+  <h1
+    #text
+    *ngSwitchCase="'h1'"
+    [ngStyle]="{ color }"
+    [ngClass]="{
+  'standard': font === 'standard',
+  'fancy': font === 'fancy',
+}"
+  >
+    <ng-container *ngTemplateOutlet="content" />
+  </h1>
+  <h2
+    #text
+    *ngSwitchCase="'h2'"
+    [ngStyle]="{ color }"
+    [ngClass]="{
+'standard': font === 'standard',
+'fancy': font === 'fancy',
+}"
+  >
+    <ng-container *ngTemplateOutlet="content" />
+  </h2>
+  <p
+    #text
+    *ngSwitchDefault
+    [ngStyle]="{ color }"
+    [ngClass]="{
     'standard': font === 'standard',
     'fancy': font === 'fancy',
   }"
->
-  <ng-content></ng-content>
-</p>
+  >
+    <ng-container *ngTemplateOutlet="content" />
+  </p>
+</ng-container>
+<ng-template #content>
+  <ng-content />
+</ng-template>
