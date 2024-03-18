@@ -5,9 +5,7 @@ import {
   OSRSAppComponent,
   OSRSPanelComponent,
   OSRSTextComponent,
-  OSRSTooltipComponent,
 } from '@memebeams-dev/osrs';
-import { OSRSTooltipService } from 'libs/osrs/src/lib/tooltip/tooltip.service';
 
 @Component({
   standalone: true,
@@ -17,9 +15,7 @@ import { OSRSTooltipService } from 'libs/osrs/src/lib/tooltip/tooltip.service';
     OSRSPanelComponent,
     ClanBannerComponent,
     RouterModule,
-    OSRSTooltipComponent,
   ],
-  providers: [OSRSTooltipService],
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
