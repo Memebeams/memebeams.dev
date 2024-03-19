@@ -21,5 +21,21 @@ import {
   styleUrl: './app.component.scss',
 })
 export class AppComponent {
-  title = 'memebeams-dev';
+  readonly buttons = [
+    {
+      icon: 'discord',
+      alt: 'Discord',
+      path: '/clan/discord',
+    },
+    {
+      icon: 'cell',
+      alt: 'Home',
+      path: '/clan',
+    },
+    {
+      icon: 'bounty',
+      alt: 'Home',
+      path: '/clan/bounty',
+    },
+  ];
 }

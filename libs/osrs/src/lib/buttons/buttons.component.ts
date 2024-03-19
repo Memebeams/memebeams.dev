@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { RxFor } from '@rx-angular/template/for';
 import { RxLet } from '@rx-angular/template/let';
-import { filter, map } from 'rxjs';
+import { BehaviorSubject, combineLatest, filter, map } from 'rxjs';
 import { OSRSTooltipDirective } from '../tooltip/tooltip.directive';
 
 export interface OSRSButton {
@@ -21,26 +21,22 @@ export interface OSRSButton {
 })
 export class OSRSButtonsComponent {
   private readonly router = inject(Router);
-  private readonly buttons = [
-    {
-      icon: 'discord',
-      alt: 'Discord',
-      path: '/discord',
-    },
-    {
-      icon: 'cell',
-      alt: 'Home',
-      path: '/',
-    },
-  ];
 
-  buttons$ = this.router.events.pipe(
-    filter((event): event is NavigationEnd => event instanceof NavigationEnd),
-    map((event) => event.url),
-    map((path) =>
-      this.buttons.map((button) => ({
+  private readonly _buttons$ = new BehaviorSubject<OSRSButton[]>([]);
+  @Input() set buttons(buttons: OSRSButton[]) {
+    this._buttons$.next(buttons);
+  }
+
+  buttons$ = combineLatest([
+    this._buttons$,
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd)
+    ),
+  ]).pipe(
+    map(([buttons, path]) =>
+      buttons.map((button) => ({
         ...button,
-        src: this.getSrc(button, path),
+        src: this.getSrc(button, path.urlAfterRedirects),
       }))
     )
   );
