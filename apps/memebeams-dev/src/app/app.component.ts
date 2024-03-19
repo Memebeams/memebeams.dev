@@ -34,7 +34,7 @@ export class AppComponent {
     },
     {
       icon: 'bounty',
-      alt: 'Home',
+      alt: 'Bounty',
       path: '/clan/bounty',
     },
   ];
