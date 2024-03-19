@@ -18,6 +18,7 @@
 }
 
 .background {
+  box-sizing: border-box;
   pointer-events: none;
   background-color: rgb(62, 53, 41);
   position: absolute;
@@ -56,6 +57,5 @@
 }
 
 .content {
-  text-align: center;
   padding: 8px;
 }

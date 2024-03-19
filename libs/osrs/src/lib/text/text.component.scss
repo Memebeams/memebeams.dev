@@ -1,3 +1,7 @@
+:host {
+  display: block;
+}
+
 p,
 h1,
 h2,
@@ -8,38 +12,46 @@ h6 {
   margin: 0;
 }
 
-p {
-  &.standard {
-    font-family: 'Runescape';
-  }
+.standard {
+  font-family: 'Runescape';
+  text-shadow: 1px 1px black 2px 2px black;
+}
 
+.fancy {
+  font-family: 'Runescape Detailed';
+  text-shadow: 1px 1px black;
+}
+
+p {
   &.fancy {
-    font-family: 'Runescape Detailed';
     font-size: 2rem;
-    line-height: 1rem;
+    line-height: 1.25rem;
   }
 }
 
 h1 {
-  &.standard {
-    font-family: 'Runescape';
-  }
+  font-size: 3rem;
 
   &.fancy {
-    font-family: 'Runescape Detailed';
-    font-size: 4rem;
-    line-height: 2rem;
+    font-size: 6rem;
+    line-height: 3.25rem;
   }
 }
 
 h2 {
-  &.standard {
-    font-family: 'Runescape';
-  }
+  font-size: 2rem;
 
   &.fancy {
-    font-family: 'Runescape Detailed';
+    font-size: 4rem;
+    line-height: 2.25rem;
+  }
+}
+
+h3 {
+  font-size: 1.5rem;
+
+  &.fancy {
     font-size: 3rem;
-    line-height: 1.5rem;
+    line-height: 1.75rem;
   }
 }

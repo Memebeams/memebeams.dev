@@ -2,7 +2,7 @@
   <h1
     #text
     *ngSwitchCase="'h1'"
-    [ngStyle]="{ color }"
+    [ngStyle]="{ color: color }"
     [ngClass]="{
   'standard': font === 'standard',
   'fancy': font === 'fancy',
@@ -21,6 +21,17 @@
   >
     <ng-container *ngTemplateOutlet="content" />
   </h2>
+  <h3
+    #text
+    *ngSwitchCase="'h3'"
+    [ngStyle]="{ color }"
+    [ngClass]="{
+'standard': font === 'standard',
+'fancy': font === 'fancy',
+}"
+  >
+    <ng-container *ngTemplateOutlet="content" />
+  </h3>
   <p
     #text
     *ngSwitchDefault

@@ -13,8 +13,13 @@
   }
 
   img {
+    display: inline-block;
+    width: 33px;
+    height: 36px;
+
     @media (orientation: portrait) {
-      width: 49px;
+      width: calc(33px * 1.5);
+      height: calc(36px * 1.5);
     }
   }
 }
