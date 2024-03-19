@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
-import { OSRSButtonsComponent } from '../buttons/buttons.component';
+import { Component, Input } from '@angular/core';
+import { OSRSButton, OSRSButtonsComponent } from '../buttons/buttons.component';
 import { OSRSTooltipComponent } from '../tooltip/tooltip.component';
 import { OSRSTooltipService } from '../tooltip/tooltip.service';
 
@@ -12,4 +12,6 @@ import { OSRSTooltipService } from '../tooltip/tooltip.service';
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })
-export class OSRSAppComponent {}
+export class OSRSAppComponent {
+  @Input() buttons: OSRSButton[] = [];
+}
