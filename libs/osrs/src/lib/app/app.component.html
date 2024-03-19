@@ -1,8 +1,9 @@
 <div class="container">
   <div class="background"></div>
   <div class="border"></div>
-  <rs-buttons />
-  <div class="content">
+  <rs-buttons [buttons]="buttons" />
+  <div class="content drop-shadow-content">
     <ng-content />
   </div>
 </div>
+<rs-tooltip />
