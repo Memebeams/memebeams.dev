@@ -37,5 +37,10 @@ export class AppComponent {
       alt: 'Bounty',
       path: '/clan/bounty',
     },
+    {
+      icon: 'sotw',
+      alt: 'Competitions',
+      path: '/clan/sotw-botw',
+    },
   ];
 }
