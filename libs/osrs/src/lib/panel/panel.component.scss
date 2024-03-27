@@ -1,5 +1,6 @@
 :host {
   display: block;
+  box-sizing: border-box;
   position: relative;
   width: 200px;
 
@@ -59,7 +60,14 @@
 .content {
   padding: 8px;
 
-  &.wide {
+  &.wide,
+  &.full {
     padding: 8px 0;
+  }
+
+  @media (orientation: landscape) {
+    &.wide {
+      padding: 8px;
+    }
   }
 }
