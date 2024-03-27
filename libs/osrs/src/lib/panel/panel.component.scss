@@ -58,4 +58,8 @@
 
 .content {
   padding: 8px;
+
+  &.wide {
+    padding: 8px 0;
+  }
 }
