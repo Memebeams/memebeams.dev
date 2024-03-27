@@ -15,6 +15,11 @@ export const appRoutes: Route[] = [
           import('@memebeams-dev/clan').then((m) => m.ClanBountyComponent),
       },
       {
+        path: 'sotw-botw',
+        loadComponent: () =>
+          import('@memebeams-dev/clan').then((m) => m.ClanSotwComponent),
+      },
+      {
         path: '',
         pathMatch: 'full',
         loadComponent: () =>
