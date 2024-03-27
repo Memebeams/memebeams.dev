@@ -26,3 +26,15 @@ body {
     filter: drop-shadow(1px 1px 2px black);
   }
 }
+
+.under-construction {
+  background-color: #e5e5f7;
+  opacity: 1;
+  background: repeating-linear-gradient(
+    -45deg,
+    #ffff0044,
+    #ffff0044 4.5px,
+    #00000044 4.5px,
+    #00000044 22.5px
+  );
+}
