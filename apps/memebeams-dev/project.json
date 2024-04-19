@@ -4,7 +4,7 @@
   "projectType": "application",
   "prefix": "app",
   "sourceRoot": "apps/memebeams-dev/src",
-  "tags": [],
+  "tags": ["scope:web"],
   "targets": {
     "build": {
       "executor": "@angular-devkit/build-angular:application",
