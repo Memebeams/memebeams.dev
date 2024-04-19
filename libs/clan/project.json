@@ -3,7 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/clan/src",
   "prefix": "lib",
-  "tags": ["clan"],
+  "tags": ["project:clan", "scope:web"],
   "projectType": "library",
   "targets": {
     "test": {
