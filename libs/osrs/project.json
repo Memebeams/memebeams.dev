@@ -3,7 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/osrs/src",
   "prefix": "rs",
-  "tags": ["osrs"],
+  "tags": ["project:osrs", "scope:web"],
   "projectType": "library",
   "targets": {
     "test": {
