@@ -6,8 +6,17 @@
   "sourceRoot": "apps/memebeams-dev/src",
   "tags": ["scope:web"],
   "targets": {
+    "build:pages": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build"],
+      "options": {
+        "commands": [
+          "cp dist/apps/memebeams-dev/browser/index.html dist/apps/memebeams-dev/browser/404.html"
+        ]
+      }
+    },
     "build": {
-      "executor": "@angular-devkit/build-angular:application",
+      "executor": "@nx/angular:application",
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/apps/memebeams-dev",
@@ -55,7 +64,7 @@
       "defaultConfiguration": "production"
     },
     "serve": {
-      "executor": "@angular-devkit/build-angular:dev-server",
+      "executor": "@nx/angular:dev-server",
       "configurations": {
         "production": {
           "buildTarget": "memebeams-dev:build:production"
@@ -67,7 +76,7 @@
       "defaultConfiguration": "development"
     },
     "extract-i18n": {
-      "executor": "@angular-devkit/build-angular:extract-i18n",
+      "executor": "@nx/angular:extract-i18n",
       "options": {
         "buildTarget": "memebeams-dev:build"
       }
