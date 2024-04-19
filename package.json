@@ -16,6 +16,7 @@
     "@nx/angular": "18.1.1",
     "@rx-angular/template": "^17.1.0",
     "axios": "^1.6.0",
+    "discord.js": "^14.14.1",
     "express": "^4.18.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
