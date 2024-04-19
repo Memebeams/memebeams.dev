@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input, inject } from '@angular/core';
-import { NavigationEnd, Router, RouterModule } from '@angular/router';
+import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { RxFor } from '@rx-angular/template/for';
 import { RxLet } from '@rx-angular/template/let';
-import { BehaviorSubject, combineLatest, filter, map } from 'rxjs';
+import { BehaviorSubject, combineLatest, filter, map, startWith } from 'rxjs';
 import { OSRSTooltipDirective } from '../tooltip/tooltip.directive';
 
 export interface OSRSButton {
@@ -15,7 +15,7 @@ export interface OSRSButton {
 @Component({
   selector: 'rs-buttons',
   standalone: true,
-  imports: [CommonModule, OSRSTooltipDirective, RouterModule, RxLet, RxFor],
+  imports: [CommonModule, OSRSTooltipDirective, RouterLink, RxLet, RxFor],
   templateUrl: './buttons.component.html',
   styleUrl: './buttons.component.scss',
 })
@@ -30,7 +30,8 @@ export class OSRSButtonsComponent {
   buttons$ = combineLatest([
     this._buttons$,
     this.router.events.pipe(
-      filter((event): event is NavigationEnd => event instanceof NavigationEnd)
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      startWith({ urlAfterRedirects: this.router.url } as NavigationEnd)
     ),
   ]).pipe(
     map(([buttons, path]) =>
