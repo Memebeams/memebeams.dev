@@ -72,6 +72,9 @@ export class BountyFeature {
     this.acceptBounty = new AcceptBounty(client, this);
     this.acceptBounty.init();
 
+    this.saveBounty = new SaveBounty(this);
+    this.loadBounty = new LoadBounty(client, this);
+
     await this.findRoleAndChannel(client);
 
     await this.loadBounty.load();
