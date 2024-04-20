@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "build:ri": "nx build ri",
-    "serve:ri": "nx serve ri"
+    "build:render": "npm install && nx build ri",
+    "serve:render": "npm install && nx serve ri"
   },
   "private": true,
   "dependencies": {
