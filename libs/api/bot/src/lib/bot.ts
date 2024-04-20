@@ -2,8 +2,8 @@ import { Client, Events, GatewayIntentBits, REST, Routes } from 'discord.js';
 import { BountyFeature } from './commands/bounty.cmd';
 
 export class Bot {
-  private readonly clientId = '1230954550928605194';
-  private readonly guildId = '960638968326664222';
+  private readonly clientId = process.env['CLIENT_ID'];
+  private readonly guildId = process.env['SERVER_ID'];
 
   private readonly client = new Client({
     intents: [
