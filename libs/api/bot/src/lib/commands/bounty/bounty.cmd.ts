@@ -1,23 +1,29 @@
+import axios from 'axios';
 import {
   ChatInputCommandInteraction,
   Client,
+  EmbedBuilder,
   GuildMember,
   GuildTextBasedChannel,
   Role,
   SlashCommandBuilder,
   TextChannel,
+  TimestampStyles,
   User,
+  time,
 } from 'discord.js';
 import { AcceptBounty } from './accept-bounty';
 import { Bounty } from './bounty';
 import { LoadBounty } from './load-bounty';
 import { SaveBounty } from './save-bounty';
 import { SetBounty } from './set-bounty';
+import { ShowBounty } from './show-bounty';
 
 export class BountyFeature {
   public readonly TARGET_KEY = 'target';
   public readonly REFERENCE_KEY = 'reference';
   public readonly USER_KEY = 'user';
+  public readonly SERVER_ID = process.env['SERVER_ID'];
 
   public channel?: GuildTextBasedChannel = undefined;
   public role?: Role = undefined;
@@ -37,6 +43,7 @@ export class BountyFeature {
   private acceptBounty: AcceptBounty;
   private saveBounty: SaveBounty;
   private loadBounty: LoadBounty;
+  private showBounty: ShowBounty;
 
   private readonly SetBountyCommand = new SlashCommandBuilder()
     .setName('set-bounty')
@@ -63,7 +70,12 @@ export class BountyFeature {
     )
     .toJSON();
 
-  public readonly commands = [this.SetBountyCommand];
+  private readonly ShowBountyCommand = new SlashCommandBuilder()
+    .setName('bounty')
+    .setDescription('See the current bounty.')
+    .toJSON();
+
+  public readonly commands = [this.SetBountyCommand, this.ShowBountyCommand];
 
   public async init(client: Client) {
     this.setBounty = new SetBounty(client, this);
@@ -75,31 +87,44 @@ export class BountyFeature {
     this.saveBounty = new SaveBounty(this);
     this.loadBounty = new LoadBounty(client, this);
 
+    this.showBounty = new ShowBounty(client, this);
+    this.showBounty.init();
+
+    console.log('Finding role and channel...');
     await this.findRoleAndChannel(client);
 
-    await this.loadBounty.load();
+    if (process.env['LOAD_BOUNTY'] === 'true') {
+      console.log('Looking for existing bounty...');
+      await this.loadBounty.load();
+      console.log(
+        this.bounty
+          ? `Bounty for "${this.bounty.target}" found.`
+          : 'No bounty found.'
+      );
+    }
 
     console.log('Bounty Feature initialized.');
-    console.log('Channel:', this.channel?.name);
-    console.log('Admin Role:', this.role?.name);
   }
 
   public async sync() {
+    console.log(this.bounty);
     if (!this.bounty) return;
     this.saveBounty.sync();
   }
 
   private async findRoleAndChannel(client: Client) {
-    const guilds = await client.guilds.fetch();
-    const guild = await guilds
-      .find((guild) => guild.id === process.env['SERVER_ID'])
-      .fetch();
-    const channels = await guild.channels.fetch();
-    this.channel = channels
+    const guild = client.guilds.cache.find(
+      (guild) => guild.id === this.SERVER_ID
+    );
+    if (!guild) throw new Error('Guild not found, check your server ID.');
+    this.channel = await guild.channels.cache
       .filter((channel): channel is TextChannel => channel.isTextBased())
       .find((channel) => channel.name === this.config.channel);
+    console.log('Channel:', this.channel?.name);
+
     const roles = await guild.roles.fetch();
     this.role = roles.find((role) => role.name === this.config.adminRole);
+    console.log('Admin Role:', this.role?.name);
   }
 
   public verifyChannel(interaction: ChatInputCommandInteraction) {
@@ -141,5 +166,77 @@ export class BountyFeature {
     if (this.bounty) {
       this.bounty.winnerId = winner.id;
     }
+  }
+
+  public generateBounty(
+    interaction: ChatInputCommandInteraction,
+    author: User
+  ): Bounty {
+    const posted = new Date().getTime();
+    const due = Math.floor(posted / 1000 + 60 * 60 * 24 * 14);
+
+    const target = interaction.options.getString(this.TARGET_KEY);
+    const reference =
+      interaction.options.getString(this.REFERENCE_KEY) ?? target;
+
+    return {
+      target,
+      reference,
+      authorId: author.id,
+      due,
+      posted,
+    };
+  }
+
+  public async generateEmbedFromBounty(
+    { target, reference, due, posted }: Bounty,
+    author: User
+  ) {
+    let embed = new EmbedBuilder()
+      .setTitle('**WANTED:**')
+      .setDescription(`**${target}**`)
+      .setColor([200, 0, 0])
+      .addFields({
+        name: 'Due:',
+        value: time(due, TimestampStyles.RelativeTime),
+      })
+      .setAuthor({
+        name: `${author.username} posted a bounty!`,
+        iconURL: author.displayAvatarURL(),
+      })
+      .setTimestamp(posted);
+
+    const title = reference.startsWith('https://oldschool.runescape.wiki/w/')
+      ? reference.substring('https://oldschool.runescape.wiki/w/'.length)
+      : reference;
+    const path = title.replace(/ /g, '_');
+
+    const response = await axios.get(
+      'https://oldschool.runescape.wiki/api.php',
+      {
+        headers: {
+          'User-Agent': 'clan-discord-bot',
+        },
+        params: {
+          action: 'query',
+          format: 'json',
+          prop: 'pageimages',
+          titles: path,
+          formatversion: '2',
+          piprop: 'thumbnail|name',
+          pithumbsize: '128',
+        },
+      }
+    );
+
+    const image = response.data?.query?.pages[0]?.thumbnail?.source;
+    if (image) {
+      embed = embed.setImage(image);
+      embed.setDescription(
+        `[**${target}**](https://oldschool.runescape.wiki/w/${path})`
+      );
+    }
+
+    return embed;
   }
 }

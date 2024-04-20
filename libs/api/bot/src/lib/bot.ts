@@ -20,12 +20,12 @@ export class Bot {
   private bounty: BountyFeature;
 
   async init() {
-    this.client.once(Events.ClientReady, (client) => {
+    this.client.once(Events.ClientReady, async (client) => {
       console.info(`Ready! Logged in as ${client.user.tag}.`);
+      await this.setupCommands();
     });
 
     await this.client.login(process.env['DISCORD_TOKEN']);
-    await this.setupCommands();
   }
 
   private async setupCommands() {
@@ -39,6 +39,7 @@ export class Bot {
   }
 
   public syncBounty(key: string) {
+    console.log(process.env['SYNC_KEY']);
     if (key !== process.env['SYNC_KEY']) return;
     this.bounty.sync();
   }

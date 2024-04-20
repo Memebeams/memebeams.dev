@@ -9,6 +9,8 @@ import * as path from 'path';
 
 const app = express();
 
+app.use(express.json());
+
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
 app.get('/api', (req, res) => {
@@ -22,7 +24,8 @@ const server = app.listen(port, async () => {
   await bot.init();
 
   app.post('/sync-bounty', async (req, res) => {
-    const key = req.body['key'];
+    const key = req.body?.['key'];
+    console.log(key);
     bot.syncBounty(key);
     res.status(200).send();
   });

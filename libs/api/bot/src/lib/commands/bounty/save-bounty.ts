@@ -3,18 +3,25 @@ import { BountyFeature } from './bounty.cmd';
 
 export class SaveBounty {
   private readonly BIN_API_KEY = process.env['BIN_API_KEY'];
+  private readonly BIN_ID = process.env['BOUNTY_BIN_ID'];
 
   constructor(private readonly feature: BountyFeature) {}
 
   public async sync() {
-    if (!this.feature.bounty) return;
+    console.log(
+      'Attempting put to bin ' + this.BIN_ID + ' with key ' + this.BIN_API_KEY
+    );
 
-    await axios.put('https://api.jsonbin.io/v3/b/662407ffe41b4d34e4e7afa8', {
+    await axios({
+      method: 'put',
+      url: `https://api.jsonbin.io/v3/b/${this.BIN_ID}`,
       headers: {
         'Content-Type': 'application/json',
-        'X-Access-Key': this.BIN_API_KEY,
+        'X-Master-Key': this.BIN_API_KEY,
       },
-      data: this.feature.bounty,
+      data: JSON.stringify(this.feature.bounty),
     });
+
+    console.info('Bounty saved!');
   }
 }

@@ -5,6 +5,8 @@ import { BountyFeature } from './bounty.cmd';
 
 export class LoadBounty {
   private readonly BIN_API_KEY = process.env['BIN_API_KEY'];
+  private readonly BIN_ID = process.env['BOUNTY_BIN_ID'];
+
   constructor(
     private readonly client: Client,
     private readonly feature: BountyFeature
@@ -12,10 +14,10 @@ export class LoadBounty {
 
   public async load() {
     const response = await axios.get(
-      'https://api.jsonbin.io/v3/b/662407ffe41b4d34e4e7afa8',
+      `https://api.jsonbin.io/v3/b/${this.BIN_ID}`,
       {
         headers: {
-          'X-Access-Key': this.BIN_API_KEY,
+          'X-Master-Key': this.BIN_API_KEY,
           'X-Bin-Meta': false,
         },
       }
