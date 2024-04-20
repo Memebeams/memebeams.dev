@@ -17,14 +17,10 @@ export class SaveBounty {
   }
 
   private async saveViaFs() {
-    const file = path.join(
-      process.cwd(),
-      this.feature.config.dataPath,
-      '/bounty.json'
-    );
+    const file = path.join(this.feature.config.dataPath, '/bounty.json');
     console.info('Saving bounty to:', file);
     try {
-      await mkdirp(path.join(process.cwd(), this.feature.config.dataPath));
+      await mkdirp(path.join(this.feature.config.dataPath));
       await writeFile(file, JSON.stringify(this.feature.bounty));
       console.info('Bounty saved!');
     } catch (error) {

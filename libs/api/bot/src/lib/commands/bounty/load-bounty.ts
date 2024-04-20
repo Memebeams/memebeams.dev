@@ -16,11 +16,7 @@ export class LoadBounty {
   ) {}
 
   public async load() {
-    const file = path.join(
-      process.cwd(),
-      this.feature.config.dataPath,
-      '/bounty.json'
-    );
+    const file = path.join(this.feature.config.dataPath, '/bounty.json');
     console.info('Looking for bounty file at:', file);
     if (!existsSync(file)) return;
     const bountyJson = await readFile(file);
