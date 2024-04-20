@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "build:render": "npm install && nx build ri",
-    "serve:render": "npm install && nx serve ri"
+    "serve:render": "node dist/apps/ri/main.js"
   },
   "private": true,
   "dependencies": {
