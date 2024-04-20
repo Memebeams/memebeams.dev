@@ -20,6 +20,12 @@ const server = app.listen(port, async () => {
   console.info(`Express server listening at: http://localhost:${port}/api`);
   const bot = new Bot();
   await bot.init();
+
+  app.post('/sync-bounty', async (req, res) => {
+    const key = req.body['key'];
+    bot.syncBounty(key);
+    res.status(200).send();
+  });
 });
 
 server.on('error', console.error);

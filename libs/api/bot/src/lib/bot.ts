@@ -1,5 +1,5 @@
 import { Client, Events, GatewayIntentBits, REST, Routes } from 'discord.js';
-import { BountyFeature } from './commands/bounty.cmd';
+import { BountyFeature } from './commands/bounty/bounty.cmd';
 
 export class Bot {
   private readonly clientId = process.env['CLIENT_ID'];
@@ -17,6 +17,8 @@ export class Bot {
 
   private readonly rest = new REST().setToken(process.env['DISCORD_TOKEN']);
 
+  private bounty: BountyFeature;
+
   async init() {
     this.client.once(Events.ClientReady, (client) => {
       console.info(`Ready! Logged in as ${client.user.tag}.`);
@@ -27,12 +29,17 @@ export class Bot {
   }
 
   private async setupCommands() {
-    const bounty = new BountyFeature();
-    await bounty.init(this.client);
+    this.bounty = new BountyFeature();
+    await this.bounty.init(this.client);
 
     await this.rest.put(
       Routes.applicationGuildCommands(this.clientId, this.guildId),
-      { body: [...bounty.commands] }
+      { body: [...this.bounty.commands] }
     );
+  }
+
+  public syncBounty(key: string) {
+    if (key !== process.env['SYNC_KEY']) return;
+    this.bounty.sync();
   }
 }
