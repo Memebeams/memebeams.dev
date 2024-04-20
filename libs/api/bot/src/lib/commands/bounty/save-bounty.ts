@@ -8,19 +8,22 @@ export class SaveBounty {
   constructor(private readonly feature: BountyFeature) {}
 
   public async sync() {
-    console.log(
-      'Attempting put to bin ' + this.BIN_ID + ' with key ' + this.BIN_API_KEY
-    );
+    console.info('Saving bounty...');
 
-    await axios({
-      method: 'put',
-      url: `https://api.jsonbin.io/v3/b/${this.BIN_ID}`,
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Master-Key': this.BIN_API_KEY,
-      },
-      data: JSON.stringify(this.feature.bounty),
-    });
+    try {
+      await axios({
+        method: 'put',
+        url: `https://api.jsonbin.io/v3/b/${this.BIN_ID}`,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': this.BIN_API_KEY,
+        },
+        data: JSON.stringify(this.feature.bounty),
+      });
+    } catch (error) {
+      console.error('Failed to save bounty:', error);
+      return;
+    }
 
     console.info('Bounty saved!');
   }

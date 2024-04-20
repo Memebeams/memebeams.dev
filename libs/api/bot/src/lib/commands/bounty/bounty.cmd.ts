@@ -90,26 +90,28 @@ export class BountyFeature {
     this.showBounty = new ShowBounty(client, this);
     this.showBounty.init();
 
-    console.log('Finding role and channel...');
+    console.info('Finding role and channel...');
     await this.findRoleAndChannel(client);
 
     if (process.env['LOAD_BOUNTY'] === 'true') {
-      console.log('Looking for existing bounty...');
+      console.info('Looking for existing bounty...');
       await this.loadBounty.load();
-      console.log(
+      console.info(
         this.bounty
           ? `Bounty for "${this.bounty.target}" found.`
           : 'No bounty found.'
       );
     }
 
-    console.log('Bounty Feature initialized.');
+    console.info('Bounty Feature initialized.');
   }
 
-  public async sync() {
-    console.log(this.bounty);
-    if (!this.bounty) return;
-    this.saveBounty.sync();
+  public sync() {
+    if (!this.bounty) {
+      console.error('Tried to save undefined bounty.');
+      return;
+    }
+    return this.saveBounty.sync();
   }
 
   private async findRoleAndChannel(client: Client) {
@@ -120,11 +122,11 @@ export class BountyFeature {
     this.channel = await guild.channels.cache
       .filter((channel): channel is TextChannel => channel.isTextBased())
       .find((channel) => channel.name === this.config.channel);
-    console.log('Channel:', this.channel?.name);
+    console.info('Channel:', this.channel?.name);
 
     const roles = await guild.roles.fetch();
     this.role = roles.find((role) => role.name === this.config.adminRole);
-    console.log('Admin Role:', this.role?.name);
+    console.info('Admin Role:', this.role?.name);
   }
 
   public verifyChannel(interaction: ChatInputCommandInteraction) {
@@ -176,12 +178,11 @@ export class BountyFeature {
     const due = Math.floor(posted / 1000 + 60 * 60 * 24 * 14);
 
     const target = interaction.options.getString(this.TARGET_KEY);
-    const reference =
-      interaction.options.getString(this.REFERENCE_KEY) ?? target;
+    const reference = interaction.options.getString(this.REFERENCE_KEY);
 
     return {
       target,
-      reference,
+      reference: reference ? reference : target,
       authorId: author.id,
       due,
       posted,

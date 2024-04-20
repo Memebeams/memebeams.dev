@@ -25,7 +25,6 @@ const server = app.listen(port, async () => {
 
   app.post('/sync-bounty', async (req, res) => {
     const key = req.body?.['key'];
-    console.log(key);
     bot.syncBounty(key);
     res.status(200).send();
   });
