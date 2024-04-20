@@ -1,5 +1,5 @@
 import { Client, Events, GatewayIntentBits, REST, Routes } from 'discord.js';
-import { BountyCommand } from './commands/bounty.cmd';
+import { BountyFeature } from './commands/bounty.cmd';
 
 export class Bot {
   private readonly clientId = '1230954550928605194';
@@ -11,6 +11,7 @@ export class Bot {
       GatewayIntentBits.GuildMessages,
       GatewayIntentBits.GuildMembers,
       GatewayIntentBits.MessageContent,
+      GatewayIntentBits.GuildMessageReactions,
     ],
   });
 
@@ -26,12 +27,12 @@ export class Bot {
   }
 
   private async setupCommands() {
-    const bountyCommand = new BountyCommand();
-    bountyCommand.init(this.client);
+    const bounty = new BountyFeature();
+    await bounty.init(this.client);
 
     await this.rest.put(
       Routes.applicationGuildCommands(this.clientId, this.guildId),
-      { body: [bountyCommand.SlashCommand] }
+      { body: [...bounty.commands] }
     );
   }
 }
