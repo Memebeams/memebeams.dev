@@ -37,13 +37,14 @@ export class BountyFeature {
     channel: 'bounty-board',
     adminRole: 'Council',
     react: '✅',
+    dataPath: '/var/data',
   };
 
-  private setBounty: SetBounty;
-  private acceptBounty: AcceptBounty;
-  private saveBounty: SaveBounty;
-  private loadBounty: LoadBounty;
-  private showBounty: ShowBounty;
+  public setBounty: SetBounty;
+  public acceptBounty: AcceptBounty;
+  public saveBounty: SaveBounty;
+  public loadBounty: LoadBounty;
+  public showBounty: ShowBounty;
 
   private readonly SetBountyCommand = new SlashCommandBuilder()
     .setName('set-bounty')

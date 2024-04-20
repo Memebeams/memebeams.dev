@@ -1,5 +1,8 @@
 import axios from 'axios';
+import { writeFile } from 'fs/promises';
+import { mkdirp } from 'mkdirp';
 import { BountyFeature } from './bounty.cmd';
+import path = require('path');
 
 export class SaveBounty {
   private readonly BIN_API_KEY = process.env['BIN_API_KEY'];
@@ -10,6 +13,27 @@ export class SaveBounty {
   public async sync() {
     console.info('Saving bounty...');
 
+    await this.saveViaFs();
+  }
+
+  private async saveViaFs() {
+    const file = path.join(
+      process.cwd(),
+      this.feature.config.dataPath,
+      '/bounty.json'
+    );
+    console.info('Saving bounty to:', file);
+    try {
+      await mkdirp(path.join(process.cwd(), this.feature.config.dataPath));
+      await writeFile(file, JSON.stringify(this.feature.bounty));
+      console.info('Bounty saved!');
+    } catch (error) {
+      console.error('Failed to save bounty:', error);
+      return;
+    }
+  }
+
+  private async saveViaAxios() {
     try {
       await axios({
         method: 'put',
@@ -24,7 +48,5 @@ export class SaveBounty {
       console.error('Failed to save bounty:', error);
       return;
     }
-
-    console.info('Bounty saved!');
   }
 }

@@ -21,6 +21,7 @@ export class SetBounty {
         interaction.commandName === 'set-bounty'
       ) {
         await this.setBounty(interaction);
+        await this.feature.saveBounty.sync();
       }
     });
   }
