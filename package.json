@@ -17,6 +17,7 @@
     "@angular/platform-browser-dynamic": "~17.2.0",
     "@angular/router": "~17.2.0",
     "@rx-angular/template": "^17.1.0",
+    "@wise-old-man/utils": "^3.3.1",
     "axios": "^1.6.8",
     "discord.js": "^14.14.1",
     "express": "^4.18.1",

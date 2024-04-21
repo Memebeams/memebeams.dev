@@ -1,6 +1,7 @@
 import { Client, Events, GatewayIntentBits, REST, Routes } from 'discord.js';
 import * as https from 'https';
 import { BountyFeature } from './commands/bounty/bounty.cmd';
+import { SyncFeature } from './commands/sync/sync.cmd';
 
 export class Bot {
   private readonly clientId = process.env['CLIENT_ID'];
@@ -35,9 +36,12 @@ export class Bot {
     this.bounty = new BountyFeature();
     await this.bounty.init(this.client);
 
+    const sync = new SyncFeature();
+    await sync.init(this.client);
+
     await this.rest.put(
       Routes.applicationGuildCommands(this.clientId, this.guildId),
-      { body: [...this.bounty.commands] }
+      { body: [...this.bounty.commands, ...sync.commands] }
     );
   }
 
