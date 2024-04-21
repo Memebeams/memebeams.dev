@@ -15,6 +15,7 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@memebeams-dev/bot": ["libs/api/bot/src/index.ts"],
       "@memebeams-dev/clan": ["libs/clan/src/index.ts"],
       "@memebeams-dev/osrs": ["libs/osrs/src/index.ts"]
     }

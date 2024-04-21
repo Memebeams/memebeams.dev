@@ -1,7 +1,7 @@
 # See http://help.github.com/ignore-files/ for more about ignoring files.
 
 # compiled output
-# dist -- disabled on 'pages' branch
+dist
 tmp
 /out-tsc
 
@@ -43,3 +43,6 @@ Thumbs.db
 
 # Environment
 .env
+
+# Persistence
+/var
