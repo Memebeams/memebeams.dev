@@ -9,6 +9,10 @@ import {
   Role,
   SlashCommandBuilder,
 } from 'discord.js';
+import { existsSync } from 'fs';
+import { readFile, writeFile } from 'fs/promises';
+import { mkdirp } from 'mkdirp';
+import path = require('path');
 
 interface RoleChange {
   member: GuildMember;
@@ -29,7 +33,27 @@ export class SyncFeature {
         .setRequired(false)
     );
 
-  public readonly commands = [this.SyncCommand];
+  private readonly RegisterCommand = new SlashCommandBuilder()
+    .setName('register')
+    .setDescription(
+      'Register your Discord username with an RSN for rank syncing.'
+    )
+    .addStringOption((option) =>
+      option
+        .setName('rsn')
+        .setDescription('The RSN to register.')
+        .setRequired(true)
+    )
+    .addUserOption((option) =>
+      option
+        .setName('user')
+        .setDescription(
+          'If you are an admin, you can set the RSN of another user.'
+        )
+        .setRequired(false)
+    );
+
+  public readonly commands = [this.SyncCommand, this.RegisterCommand];
 
   private readonly wom = new WOMClient();
 
@@ -48,11 +72,12 @@ export class SyncFeature {
   };
 
   private readonly roles: { [key: string]: Role } = {};
-  private readonly rsnToDiscordId: { [key: string]: string } = {};
 
+  // TODO: Add config support
   private config = {
     adminRole: 'Council',
     groupId: 4965,
+    dataPath: '/var/data',
   };
 
   private client: Client;
@@ -64,11 +89,41 @@ export class SyncFeature {
   public async init(client: Client) {
     this.client = client;
 
+    this.guild = await this.client.guilds.fetch(this.SERVER_ID);
+
+    await this.updateMembers();
+    Object.entries(this.rankToRolesMap).forEach(([rank, roleName]) => {
+      const role = this.guild.roles.cache.find(
+        (role) => role.name === roleName
+      );
+      if (!role) {
+        console.error(`Role '${roleName}' not found for rank '${rank}'.`);
+        return;
+      }
+
+      this.roles[rank] = role;
+    });
+
+    this.initSyncCommand();
+    await this.initRegisterCommand();
+  }
+
+  private initSyncCommand() {
     this.client.on(Events.InteractionCreate, async (interaction) => {
       if (
         interaction.isChatInputCommand() &&
         interaction.commandName === 'sync'
       ) {
+        console.log(
+          Object.entries(this.registeredMembers).map(
+            ([rsn, member]) => `RSN: ${rsn}, Member: ${member.displayName}`
+          )
+        );
+        console.log(
+          Object.entries(this.roles).map(
+            ([rank, role]) => `Rank: ${rank}, Role: ${role.name}`
+          )
+        );
         const member = interaction.member as GuildMember;
         const isAdmin = member.roles.cache.some(
           (role) => role.name === this.config.adminRole
@@ -86,38 +141,121 @@ export class SyncFeature {
         await this.sync(interaction, updateRoles);
       }
     });
+  }
 
-    this.guild = await this.client.guilds.fetch(this.SERVER_ID);
-    const members = await this.guild.members.fetch();
-    members.forEach((member) => {
-      this.members[member.displayName.toLowerCase()] = member;
+  private async initRegisterCommand() {
+    await this.loadRegisteredMembers();
+    this.client.on(Events.InteractionCreate, async (interaction) => {
+      if (
+        interaction.isChatInputCommand() &&
+        interaction.commandName === 'register'
+      ) {
+        await interaction.deferReply({ ephemeral: true });
+
+        const rsn = interaction.options.getString('rsn').toLowerCase();
+        let member = interaction.member as GuildMember;
+        const isAdmin = member.roles.cache.some(
+          (role) => role.name === this.config.adminRole
+        );
+
+        const targetUser = interaction.options.getUser('user');
+
+        if (!isAdmin && !!targetUser) {
+          interaction.editReply({
+            content: `You must have the '${this.config.adminRole}' role to set another user's RSN.`,
+          });
+          return;
+        }
+
+        if (targetUser) member = this.guild.members.cache.get(targetUser.id);
+        if (
+          this.registeredMembers[rsn] &&
+          this.registeredMembers[rsn].id === member.id
+        ) {
+          await interaction.editReply({
+            content: `RSN '${rsn}' is already registered for ${member.displayName}.`,
+          });
+          return;
+        }
+
+        const oldEntry = Object.entries(this.registeredMembers).find(
+          ([key, value]) => value.id === member.id
+        );
+
+        if (oldEntry) {
+          delete this.registeredMembers[oldEntry[0]];
+        }
+
+        this.registeredMembers[rsn] = member;
+        await this.saveRegisteredMembers();
+        await interaction.editReply({
+          content: `Successfully registered RSN '${rsn}' for ${member.displayName}.`,
+        });
+      }
     });
+  }
 
-    Object.entries(this.rankToRolesMap).forEach(([rank, roleName]) => {
-      const role = this.guild.roles.cache.find(
-        (role) => role.name === roleName
+  private async saveRegisteredMembers() {
+    const file = path.join(this.config.dataPath, '/members.json');
+    console.info('Saving members to:', file);
+    try {
+      await mkdirp(path.join(this.config.dataPath));
+      const memberIds = Object.entries(this.registeredMembers).reduce(
+        (acc, [rsn, member]) => {
+          acc[rsn] = member.id;
+          return acc;
+        },
+        {}
       );
-      if (!role) {
-        console.error(`Role '${roleName}' not found for rank '${rank}'.`);
-        return;
+
+      await writeFile(file, JSON.stringify(memberIds));
+      console.info('Members saved!');
+    } catch (error) {
+      console.error('Failed to save members:', error);
+      return;
+    }
+  }
+
+  private async loadRegisteredMembers() {
+    const file = path.join(this.config.dataPath, '/members.json');
+    console.info('Loading members from:', file);
+    if (!existsSync(file)) return;
+    try {
+      const memberIdsJson = await readFile(file);
+      const memberIds: { [rsn: string]: string } = JSON.parse(
+        memberIdsJson.toString()
+      );
+
+      for (let [rsn, id] of Object.entries(memberIds)) {
+        console.log('Loading member:', rsn, id);
+        const member = await this.guild.members.fetch(id);
+        console.log('Member found:', rsn, member.displayName);
+        this.registeredMembers[rsn] = member;
       }
 
-      this.roles[rank] = role;
-    });
+      console.info('Members loaded!');
+    } catch (error) {
+      console.error('Failed to load members:', error);
+      return;
+    }
+  }
+
+  private async updateMembers() {
+    const members = await this.guild.members.fetch();
+    this.members = members.reduce((acc, member) => {
+      acc[member.displayName.toLowerCase()] = member;
+      return acc;
+    }, {});
   }
 
   private async sync(
     interaction: ChatInputCommandInteraction,
     updateRoles: boolean
   ) {
-    if (updateRoles) {
-      await interaction.editReply(
-        'Applying the roles is not implemented yet, but you can preview the changes by leaving update-roles as false.'
-      );
-      return;
-    }
-
     await interaction.deferReply({ ephemeral: true });
+
+    await this.updateMembers();
+
     const group = await this.wom.groups.getGroupDetails(this.config.groupId);
 
     const roleChanges: RoleChange[] = [];
@@ -125,9 +263,8 @@ export class SyncFeature {
       const newRole = this.roles[membership.role];
       if (!newRole) return;
 
-      const rsn = membership.player.username;
-      const knownMember = this.registeredMembers[rsn];
-      const member = knownMember ?? this.members[rsn];
+      const rsn = membership.player.username.toLowerCase();
+      const member = this.registeredMembers[rsn] ?? this.members[rsn];
       if (!member) return;
 
       const memberHasRole = member.roles.cache.find(
@@ -167,12 +304,30 @@ export class SyncFeature {
       body = 'No rank updates to apply.';
     }
 
-    const embed = new EmbedBuilder()
-      .setTitle('Rank updates that will be applied:')
-      .setDescription(body);
+    if (!updateRoles) {
+      const embed = new EmbedBuilder()
+        .setTitle('Rank updates that will be applied:')
+        .setDescription(body);
 
-    await interaction.editReply({
-      embeds: [embed],
-    });
+      await interaction.editReply({
+        embeds: [embed],
+      });
+      return;
+    } else {
+      roleChanges.forEach(async (change) => {
+        for (const role of change.oldRoles) {
+          await change.member.roles.remove(role);
+        }
+        await change.member.roles.add(change.newRole);
+      });
+
+      const embed = new EmbedBuilder()
+        .setTitle('Rank updates applied:')
+        .setDescription(body);
+
+      await interaction.editReply({
+        embeds: [embed],
+      });
+    }
   }
 }
