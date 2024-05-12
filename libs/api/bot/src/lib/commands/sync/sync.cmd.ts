@@ -35,17 +35,16 @@ export class SyncFeature {
 
   // TODO: roles config
   private rankToRolesMap = {
-    striker: 'Steel Rank',
-    legacy: 'Steel Rank',
-    expert: 'Adamant Rank',
-    pyromancer: 'Adamant Rank',
-    knight: 'Rune Rank',
-    prodigy: 'Rune Rank',
-    paladin: 'Dragon Rank',
-    firestarter: 'Dragon Rank',
+    striker: 'Steel',
+    legacy: 'Steel',
+    expert: 'Adamant',
+    pyromancer: 'Adamant',
+    knight: 'Rune',
+    prodigy: 'Rune',
+    paladin: 'Dragon',
+    firestarter: 'Dragon',
     wrath: 'Wrath',
-    imp: 'Imp',
-    beast: 'Beast Rank',
+    beast: 'Beast',
   };
 
   private readonly roles: { [key: string]: Role } = {};
