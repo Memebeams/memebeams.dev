@@ -114,16 +114,6 @@ export class SyncFeature {
         interaction.isChatInputCommand() &&
         interaction.commandName === 'sync'
       ) {
-        console.log(
-          Object.entries(this.registeredMembers).map(
-            ([rsn, member]) => `RSN: ${rsn}, Member: ${member.displayName}`
-          )
-        );
-        console.log(
-          Object.entries(this.roles).map(
-            ([rank, role]) => `Rank: ${rank}, Role: ${role.name}`
-          )
-        );
         const member = interaction.member as GuildMember;
         const isAdmin = member.roles.cache.some(
           (role) => role.name === this.config.adminRole
@@ -227,9 +217,7 @@ export class SyncFeature {
       );
 
       for (let [rsn, id] of Object.entries(memberIds)) {
-        console.log('Loading member:', rsn, id);
         const member = await this.guild.members.fetch(id);
-        console.log('Member found:', rsn, member.displayName);
         this.registeredMembers[rsn] = member;
       }
 
