@@ -1,13 +1,10 @@
 import { Client, Events, GatewayIntentBits, REST, Routes } from 'discord.js';
-import * as https from 'https';
 import { BountyFeature } from './commands/bounty/bounty.cmd';
 import { SyncFeature } from './commands/sync/sync.cmd';
 
 export class Bot {
   private readonly clientId = process.env['CLIENT_ID'];
   private readonly guildId = process.env['SERVER_ID'];
-  private readonly BIN_API_KEY = process.env['BIN_API_KEY'];
-  private readonly BIN_ID = process.env['BOUNTY_BIN_ID'];
 
   private readonly client = new Client({
     intents: [
@@ -51,17 +48,5 @@ export class Bot {
       return;
     }
     return this.bounty.sync();
-  }
-
-  public syncOnExit() {
-    https.request({
-      method: 'put',
-      url: `https://api.jsonbin.io/v3/b/${this.BIN_ID}`,
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Master-Key': this.BIN_API_KEY,
-      },
-      data: JSON.stringify(this.bounty),
-    } as https.RequestOptions);
   }
 }
