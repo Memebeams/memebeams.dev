@@ -1,7 +1,7 @@
 import exp = require('constants');
 import { Express } from 'express';
 import { existsSync } from 'fs';
-import { readFile } from 'fs/promises';
+import { readFile, writeFile } from 'fs/promises';
 import * as path from 'path';
 
 export interface Team {
@@ -77,6 +77,12 @@ export class Battleship {
     this.data = JSON.parse(battleshipJson.toString());
   }
 
+  public async save(data: BattleshipData) {
+    const file = path.join(this.config.dataPath, '/battleship.json');
+    await writeFile(file, JSON.stringify(data, null, 2));
+    this.data = data;
+  }
+
   public getTeamByPassword(password: string): Team | undefined {
     return this.data.teams.find(
       (team) => team.password === password || team.adminPassword === password
@@ -130,5 +136,16 @@ export async function battleship(app: Express) {
     const board = battleship.getBoard();
     const teamBoard = battleship.getTeamBoard(team.id);
     return res.status(200).json({ board, teamBoard });
+  });
+
+  app.post('/api/battleship/admin/upload', async (req, res) => {
+    const key = req.headers['key'];
+    if (key !== process.env['SYNC_KEY']) {
+      return res.status(401).send('Invalid key');
+    }
+
+    const battleshipData: BattleshipData = req.body;
+    await battleship.save(battleshipData);
+    return res.status(200).send('Data saved');
   });
 }
