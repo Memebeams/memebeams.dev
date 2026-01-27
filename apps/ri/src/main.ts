@@ -22,7 +22,6 @@ app.use(cors(corsOptions));
 
 const port = process.env.PORT || 3333;
 const server = app.listen(port, async () => {
-  console.info(`Express server listening at: http://localhost:${port}/api`);
   const bot = new Bot();
   await bot.init();
 

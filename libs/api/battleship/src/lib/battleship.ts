@@ -42,12 +42,12 @@ export enum ShipType {
 }
 
 export interface Ship {
-  id: string;
   squares: ShipSquare[][];
 }
 
 export interface TeamShip extends Ship {
-  coords: { x: number; y: number };
+  id: string;
+  coords?: { x: number; y: number };
 }
 
 export interface ShipSquare {
@@ -57,7 +57,7 @@ export interface ShipSquare {
 export interface BattleshipData {
   teams: Team[];
   board: Board;
-  shipTypes: { [key in ShipType]: Ship[] };
+  shipTypes: { [key in ShipType]: Ship };
   teamBoards: { [teamId: string]: TeamBoard };
 }
 
@@ -102,6 +102,10 @@ export class Battleship {
   public getTeamBoard(teamId: string): TeamBoard | undefined {
     return this.data.teamBoards[teamId];
   }
+
+  public getShipTypes(): { [key in ShipType]: Ship } {
+    return this.data.shipTypes;
+  }
 }
 
 export async function battleship(app: Express) {
@@ -135,7 +139,8 @@ export async function battleship(app: Express) {
 
     const board = battleship.getBoard();
     const teamBoard = battleship.getTeamBoard(team.id);
-    return res.status(200).json({ board, teamBoard });
+    const shipTypes = battleship.getShipTypes();
+    return res.status(200).json({ board, teamBoard, shipTypes });
   });
 
   app.post('/api/battleship/admin/upload', async (req, res) => {
