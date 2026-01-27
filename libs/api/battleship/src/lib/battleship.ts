@@ -117,7 +117,7 @@ export async function battleship(app: Express) {
   });
 
   app.get('/api/battleship/board', async (req, res) => {
-    const token = req.headers['Authorization'] || req.headers['authorization'];
+    const token = req.headers['token'];
     if (!token || typeof token !== 'string') {
       return res.status(401).send('Missing token');
     }
