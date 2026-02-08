@@ -55,6 +55,7 @@ export interface ShipSquare {
 }
 
 export interface BattleshipData {
+  eventPassword: string;
   teams: Team[];
   board: Board;
   shipTypes: { [key in ShipType]: Ship };
@@ -83,28 +84,98 @@ export class Battleship {
     this.data = data;
   }
 
-  public getTeamByPassword(password: string): Team | undefined {
-    return this.data.teams.find(
-      (team) => team.password === password || team.adminPassword === password
-    );
+  public login(app: Express) {
+    app.post('/api/battleship/login', async (req, res) => {
+      const { password } = req.body;
+      if (!password) {
+        return res.status(400).send('Missing password');
+      }
+
+      if (password === this.data.eventPassword) {
+        const eventToken = process.env['SYNC_KEY'] || '';
+        return res.status(200).json({ token: eventToken, isAdmin: true });
+      }
+
+      const team = this.data.teams.find(
+        (t) => t.password === password || t.adminPassword === password
+      );
+      if (!team) {
+        return res.status(403).send('Invalid password');
+      }
+
+      const isCaptain = team.adminPassword === password;
+
+      return res
+        .status(200)
+        .json({ token: isCaptain ? team.adminToken : team.token, isCaptain });
+    });
   }
 
-  public getTeamByToken(token: string): Team | undefined {
-    return this.data.teams.find(
-      (team) => team.token === token || team.adminToken === token
-    );
+  public getBoard(app: Express) {
+    app.get('/api/battleship/board', async (req, res) => {
+      const token = req.headers['token'];
+      if (!token || typeof token !== 'string') {
+        return res.status(401).send('Missing token');
+      }
+
+      if (token === process.env['SYNC_KEY']) {
+        const board = this.data.board;
+        const shipTypes = this.data.shipTypes;
+        return res.status(200).json({ board, shipTypes });
+      }
+
+      const team = this.data.teams.find(
+        (t) => t.token === token || t.adminToken === token
+      );
+      if (!team) {
+        return res.status(403).send('Invalid token');
+      }
+
+      const board = this.data.board;
+      const teamBoard = this.data.teamBoards[team.id];
+      const shipTypes = this.data.shipTypes;
+      return res.status(200).json({ board, teamBoard, shipTypes });
+    });
   }
 
-  public getBoard(): Board {
-    return this.data.board;
+  public uploadData(app: Express) {
+    app.post('/api/battleship/admin/upload', async (req, res) => {
+      const key = req.headers['token'];
+      if (key !== process.env['SYNC_KEY']) {
+        return res.status(401).send('Invalid key');
+      }
+
+      const battleshipData: BattleshipData = req.body;
+      await this.save(battleshipData);
+      return res.status(200).send('Data saved');
+    });
   }
 
-  public getTeamBoard(teamId: string): TeamBoard | undefined {
-    return this.data.teamBoards[teamId];
-  }
+  public updateCell(app: Express) {
+    app.put('/api/battleship/admin/cell', async (req, res) => {
+      const key = req.headers['token'];
+      if (key !== process.env['SYNC_KEY']) {
+        return res.status(401).send('Invalid token');
+      }
 
-  public getShipTypes(): { [key in ShipType]: Ship } {
-    return this.data.shipTypes;
+      const cell: Cell = req.body;
+      if (cell.x === undefined || cell.y === undefined) {
+        return res.status(400).send('Missing cell coordinates');
+      }
+
+      if (
+        cell.x < 0 ||
+        cell.x >= this.data.board.width ||
+        cell.y < 0 ||
+        cell.y >= this.data.board.height
+      ) {
+        return res.status(400).send('Cell coordinates out of bounds');
+      }
+
+      this.data.board.cells[cell.y][cell.x] = cell;
+      this.save(this.data);
+      return res.status(200).send(cell);
+    });
   }
 }
 
@@ -112,45 +183,8 @@ export async function battleship(app: Express) {
   const battleship = new Battleship();
   await battleship.load();
 
-  app.post('/api/battleship/login', async (req, res) => {
-    const { password } = req.body;
-    if (!password) {
-      return res.status(400).send('Missing password');
-    }
-
-    const team = battleship.getTeamByPassword(password);
-    if (!team) {
-      return res.status(403).send('Invalid password');
-    }
-
-    return res.status(200).json({ token: team.token });
-  });
-
-  app.get('/api/battleship/board', async (req, res) => {
-    const token = req.headers['token'];
-    if (!token || typeof token !== 'string') {
-      return res.status(401).send('Missing token');
-    }
-
-    const team = battleship.getTeamByToken(token);
-    if (!team) {
-      return res.status(403).send('Invalid token');
-    }
-
-    const board = battleship.getBoard();
-    const teamBoard = battleship.getTeamBoard(team.id);
-    const shipTypes = battleship.getShipTypes();
-    return res.status(200).json({ board, teamBoard, shipTypes });
-  });
-
-  app.post('/api/battleship/admin/upload', async (req, res) => {
-    const key = req.headers['key'];
-    if (key !== process.env['SYNC_KEY']) {
-      return res.status(401).send('Invalid key');
-    }
-
-    const battleshipData: BattleshipData = req.body;
-    await battleship.save(battleshipData);
-    return res.status(200).send('Data saved');
-  });
+  battleship.login(app);
+  battleship.getBoard(app);
+  battleship.uploadData(app);
+  battleship.updateCell(app);
 }
