@@ -177,6 +177,39 @@ export class Battleship {
       return res.status(200).send(cell);
     });
   }
+
+  public updateShip(app: Express) {
+    app.put('/api/battleship/ship', async (req, res) => {
+      const token = req.headers['token'];
+      if (!token || typeof token !== 'string') {
+        return res.status(401).send('Missing token');
+      }
+
+      const team = this.data.teams.find((t) => t.adminToken === token);
+      if (!team) {
+        return res.status(403).send('Invalid token');
+      }
+
+      const board = this.data.teamBoards[team.id];
+      if (!board) {
+        return res.status(404).send('Team board not found');
+      }
+
+      if (!req.body.id) {
+        return res.status(400).send('Missing ship ID');
+      }
+
+      this.data.teamBoards[team.id] = {
+        ...board,
+        ships: {
+          ...board.ships,
+          [req.body.id]: req.body,
+        },
+      };
+      this.save(this.data);
+      return res.status(200).send(req.body);
+    });
+  }
 }
 
 export async function battleship(app: Express) {
@@ -187,4 +220,5 @@ export async function battleship(app: Express) {
   battleship.getBoard(app);
   battleship.uploadData(app);
   battleship.updateCell(app);
+  battleship.updateShip(app);
 }
