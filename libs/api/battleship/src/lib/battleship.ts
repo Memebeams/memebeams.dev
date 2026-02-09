@@ -52,6 +52,7 @@ export interface TeamShip extends Ship {
 
 export interface ShipSquare {
   included: boolean;
+  center?: boolean;
 }
 
 export interface BattleshipData {
@@ -139,7 +140,7 @@ export class Battleship {
   }
 
   public uploadData(app: Express) {
-    app.post('/api/battleship/admin/upload', async (req, res) => {
+    app.put('/api/battleship/admin/data', async (req, res) => {
       const key = req.headers['token'];
       if (key !== process.env['SYNC_KEY']) {
         return res.status(401).send('Invalid key');
@@ -148,6 +149,17 @@ export class Battleship {
       const battleshipData: BattleshipData = req.body;
       await this.save(battleshipData);
       return res.status(200).send('Data saved');
+    });
+  }
+
+  public getData(app: Express) {
+    app.get('/api/battleship/admin/data', async (req, res) => {
+      const key = req.headers['token'];
+      if (key !== process.env['SYNC_KEY']) {
+        return res.status(401).send('Invalid key');
+      }
+
+      return res.status(200).json(this.data);
     });
   }
 
@@ -219,6 +231,7 @@ export async function battleship(app: Express) {
   battleship.login(app);
   battleship.getBoard(app);
   battleship.uploadData(app);
+  battleship.getData(app);
   battleship.updateCell(app);
   battleship.updateShip(app);
 }
