@@ -22,6 +22,13 @@ export interface Board {
 
 export interface TeamBoard {
   ships: { [id: string]: TeamShip };
+  attacks: Record<string, Attack>;
+}
+
+export interface TeamBoardResponse {
+  ships: { [id: string]: TeamShip };
+  attacksOnTeam: Record<string, Attack>;
+  attacksByTeam: Record<string, Attack>;
 }
 
 export interface Cell {
@@ -47,6 +54,7 @@ export interface Ship {
 
 export interface TeamShip extends Ship {
   id: string;
+  rotation: 0 | 1 | 2 | 3;
   coords?: { x: number; y: number };
 }
 
@@ -55,8 +63,17 @@ export interface ShipSquare {
   center?: boolean;
 }
 
+export interface Attack {
+  x: number;
+  y: number;
+  rsn: string;
+  hit?: boolean;
+}
+
 export interface BattleshipData {
   eventPassword: string;
+  hitSrc: string;
+  missSrc: string;
   teams: Team[];
   board: Board;
   shipTypes: { [key in ShipType]: Ship };
@@ -132,10 +149,29 @@ export class Battleship {
         return res.status(403).send('Invalid token');
       }
 
+      const otherTeam = this.data.teams.find((t) => t.id !== team.id);
+      if (!otherTeam) {
+        return res.status(404).send('Other team not found');
+      }
+
       const board = this.data.board;
       const teamBoard = this.data.teamBoards[team.id];
+      const otherTeamBoard = this.data.teamBoards[otherTeam.id];
       const shipTypes = this.data.shipTypes;
-      return res.status(200).json({ board, teamBoard, shipTypes });
+      const hitSrc = this.data.hitSrc;
+      const missSrc = this.data.missSrc;
+      const teamBoardResponse: TeamBoardResponse = {
+        ships: teamBoard.ships,
+        attacksByTeam: teamBoard.attacks,
+        attacksOnTeam: otherTeamBoard.attacks,
+      };
+      return res.status(200).json({
+        board,
+        teamBoard: teamBoardResponse,
+        shipTypes,
+        hitSrc,
+        missSrc,
+      });
     });
   }
 
@@ -222,6 +258,78 @@ export class Battleship {
       return res.status(200).send(req.body);
     });
   }
+
+  public attack(app: Express) {
+    app.post('/api/battleship/attack', async (req, res) => {
+      const token = req.headers['token'];
+      if (!token || typeof token !== 'string') {
+        return res.status(401).send('Missing token');
+      }
+
+      const team = this.data.teams.find((t) => t.adminToken === token);
+      if (!team) {
+        return res.status(403).send('Invalid token');
+      }
+
+      const otherTeam = this.data.teams.find((t) => t.id !== team.id);
+      if (!otherTeam) {
+        return res.status(404).send('Other team not found');
+      }
+
+      const attack: Attack = req.body;
+      if (attack.x === undefined || attack.y === undefined || !attack.rsn) {
+        return res.status(400).send('Missing attack data');
+      }
+
+      console.log(
+        `Team ${team.name} is attacking cell (${attack.x}, ${attack.y}) by user: ${attack.rsn}`
+      );
+      attack.hit = this.isCellOccupied(attack, otherTeam.id);
+      console.log(`Attack result: ${attack.hit ? 'HIT' : 'MISS'}`);
+      const board = this.data.teamBoards[team.id];
+      if (!board) {
+        return res.status(404).send('Team board not found');
+      }
+
+      if (!board.attacks) {
+        board.attacks = {};
+      }
+      board.attacks[getCellKey(attack)] = attack;
+      this.data.teamBoards[team.id] = board;
+
+      this.save(this.data);
+      return res.status(200).send(attack);
+    });
+  }
+
+  public isCellOccupied({ x, y }: { x: number; y: number }, teamId: string) {
+    const teamBoard = this.data.teamBoards[teamId];
+    if (!teamBoard) return false;
+
+    const teamShips = Object.values(teamBoard.ships);
+    for (const ship of teamShips) {
+      if (!ship.coords) continue;
+      const squares = rotateSquares(ship.squares, ship.rotation);
+      const center = getCenter(squares);
+
+      for (let rowIndex = 0; rowIndex < squares.length; rowIndex++) {
+        for (
+          let colIndex = 0;
+          colIndex < squares[rowIndex].length;
+          colIndex++
+        ) {
+          if (!squares[rowIndex][colIndex].included) continue;
+          const cellX = ship.coords.x + colIndex - center.x;
+          const cellY = ship.coords.y + rowIndex - center.y;
+          if (cellX === x && cellY === y) {
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
+  }
 }
 
 export async function battleship(app: Express) {
@@ -234,4 +342,70 @@ export async function battleship(app: Express) {
   battleship.getData(app);
   battleship.updateCell(app);
   battleship.updateShip(app);
+  battleship.attack(app);
+}
+
+export function getCellKey({ x, y }: { x: number; y: number }) {
+  return `${x},${y}`;
+}
+
+export function rotateSquares(
+  squares: ShipSquare[][],
+  rotation: 0 | 1 | 2 | 3
+): ShipSquare[][] {
+  // Rotate the 2D array squares by 90 * rotation degrees
+  const numRows = squares.length;
+  const numCols = squares[0]?.length || 0;
+
+  if (rotation === 0) {
+    return squares;
+  }
+
+  const rotated: ShipSquare[][] = [];
+
+  if (rotation === 1) {
+    // 90 degrees clockwise
+    for (let col = 0; col < numCols; col++) {
+      rotated[col] = [];
+      for (let row = numRows - 1; row >= 0; row--) {
+        rotated[col].push(squares[row][col]);
+      }
+    }
+  } else if (rotation === 2) {
+    // 180 degrees
+    for (let row = numRows - 1; row >= 0; row--) {
+      rotated.push([...squares[row]].reverse());
+    }
+  } else if (rotation === 3) {
+    // 270 degrees clockwise (or 90 degrees counterclockwise)
+    for (let col = numCols - 1; col >= 0; col--) {
+      rotated[numCols - 1 - col] = [];
+      for (let row = 0; row < numRows; row++) {
+        rotated[numCols - 1 - col].push(squares[row][col]);
+      }
+    }
+  }
+
+  return rotated;
+}
+
+export function getCenter(squares: ShipSquare[][]): {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+} {
+  for (let rowIndex = 0; rowIndex < squares.length; rowIndex++) {
+    for (let colIndex = 0; colIndex < squares[rowIndex].length; colIndex++) {
+      if (squares[rowIndex][colIndex].center) {
+        return {
+          x: colIndex,
+          y: rowIndex,
+          width: squares[0].length,
+          height: squares.length,
+        };
+      }
+    }
+  }
+  return { x: 0, y: 0, width: 0, height: 0 };
 }
