@@ -169,17 +169,23 @@ export class Battleship {
       const hitSrc = this.data.hitSrc;
       const missSrc = this.data.missSrc;
 
-      this.addHits(teamBoard.ships, otherTeamBoard.attacks);
-      this.addHits(otherTeamBoard.ships, teamBoard.attacks);
+      const ships = this.withHits(teamBoard.ships, otherTeamBoard.attacks);
+      const enemyShips = this.withHits(otherTeamBoard.ships, teamBoard.attacks);
 
-      const enemyShipsSunk = this.filterToSunkShips(otherTeamBoard.ships);
+      const enemyShipsSunk = this.filterBySunkStatus(enemyShips, true);
+
+      let allyShipsNotSunk = this.filterBySunkStatus(ships, false);
+      const allyShipsSunk = this.filterBySunkStatus(ships, true);
 
       if (!isCaptain) {
-        this.removeCoords(teamBoard.ships);
+        allyShipsNotSunk = this.withoutCoords(allyShipsNotSunk);
       }
 
       const teamBoardResponse: TeamBoardResponse = {
-        ships: teamBoard.ships,
+        ships: {
+          ...allyShipsNotSunk,
+          ...allyShipsSunk,
+        },
         enemyShipsSunk,
         attacksByTeam: teamBoard.attacks,
         attacksOnTeam: otherTeamBoard.attacks,
@@ -195,13 +201,15 @@ export class Battleship {
     });
   }
 
-  private addHits(
+  private withHits(
     ships: { [id: string]: TeamShip },
     attacks: Record<string, Attack>
   ) {
-    Object.values(ships).forEach((ship) => {
+    const shipsWithHits: { [id: string]: TeamShip } = { ...ships };
+    Object.values(shipsWithHits).forEach((ship) => {
       const squares = rotateSquares(ship.squares, ship.rotation);
 
+      const shipWithHits = { ...ship, hits: {} };
       for (const [rowIndex, row] of squares.entries()) {
         for (const [colIndex, square] of row.entries()) {
           if (!square.included) continue;
@@ -212,36 +220,48 @@ export class Battleship {
           };
           const attack = attacks[getCellKey(cellCoords)];
           if (attack) {
-            ship.hits = {
-              ...(ship.hits || {}),
+            shipWithHits.hits = {
+              ...ship.hits,
               [getCellKey({ x: colIndex, y: rowIndex })]: attack,
             };
           }
         }
       }
+
+      shipsWithHits[ship.id] = shipWithHits;
     });
+    return shipsWithHits;
   }
 
-  private removeCoords(ships: { [id: string]: TeamShip }) {
-    Object.values(ships).forEach((ship) => {
-      ship.coords = undefined;
+  private withoutCoords(ships: { [id: string]: TeamShip }) {
+    const shipsWithoutCoords: { [id: string]: TeamShip } = { ...ships };
+    Object.keys(shipsWithoutCoords).forEach((shipId) => {
+      shipsWithoutCoords[shipId] = {
+        ...shipsWithoutCoords[shipId],
+        coords: undefined,
+      };
     });
+    return shipsWithoutCoords;
   }
 
-  private filterToSunkShips(ships: { [id: string]: TeamShip }) {
-    const sunkShips: { [id: string]: TeamShip } = { ...ships };
-    Object.keys(sunkShips).forEach((shipId) => {
-      const ship = sunkShips[shipId];
+  private filterBySunkStatus(ships: { [id: string]: TeamShip }, sunk: boolean) {
+    const filtered: { [id: string]: TeamShip } = { ...ships };
+    const shouldDelete = (squareCount: number, hitCount: number) => {
+      return sunk ? hitCount < squareCount : hitCount === squareCount;
+    };
+
+    Object.keys(filtered).forEach((shipId) => {
+      const ship = filtered[shipId];
       const squareCount = ship.squares.reduce(
         (count, row) => count + row.filter((sq) => sq.included).length,
         0
       );
       const hitCount = ship.hits ? Object.keys(ship.hits).length : 0;
-      if (squareCount === 0 || hitCount < squareCount) {
-        delete sunkShips[shipId];
+      if (shouldDelete(squareCount, hitCount)) {
+        delete filtered[shipId];
       }
     });
-    return sunkShips;
+    return filtered;
   }
 
   public uploadData(app: Express) {
@@ -365,15 +385,14 @@ export class Battleship {
       }
       board.attacks[getCellKey(attack)] = attack;
 
-      const ships = this.data.teamBoards[otherTeam.id].ships;
-      this.addHits(ships, {
+      const ships = this.withHits(this.data.teamBoards[otherTeam.id].ships, {
         ...board.attacks,
         [getCellKey(attack)]: attack,
       });
 
       const response: AttackResponse = {
         attack,
-        enemyShipsSunk: this.filterToSunkShips(ships),
+        enemyShipsSunk: this.filterBySunkStatus(ships, true),
       };
 
       this.save(this.data);
