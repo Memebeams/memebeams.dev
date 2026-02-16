@@ -208,21 +208,23 @@ export class Battleship {
     const shipsWithHits: { [id: string]: TeamShip } = { ...ships };
     Object.values(shipsWithHits).forEach((ship) => {
       const squares = rotateSquares(ship.squares, ship.rotation);
+      const center = getCenter(squares);
 
       const shipWithHits = { ...ship, hits: {} };
       for (const [rowIndex, row] of squares.entries()) {
         for (const [colIndex, square] of row.entries()) {
           if (!square.included) continue;
-          const center = getCenter(squares);
           const cellCoords = {
             x: ship.coords.x - center.x + colIndex,
             y: ship.coords.y - center.y + rowIndex,
           };
+
           const attack = attacks[getCellKey(cellCoords)];
           if (attack) {
+            const key = getCellKey({ x: colIndex, y: rowIndex });
             shipWithHits.hits = {
-              ...ship.hits,
-              [getCellKey({ x: colIndex, y: rowIndex })]: attack,
+              ...shipWithHits.hits,
+              [key]: attack,
             };
           }
         }
@@ -247,7 +249,8 @@ export class Battleship {
   private filterBySunkStatus(ships: { [id: string]: TeamShip }, sunk: boolean) {
     const filtered: { [id: string]: TeamShip } = { ...ships };
     const shouldDelete = (squareCount: number, hitCount: number) => {
-      return sunk ? hitCount < squareCount : hitCount === squareCount;
+      const isSunk = hitCount === squareCount;
+      return sunk ? !isSunk : isSunk;
     };
 
     Object.keys(filtered).forEach((shipId) => {
@@ -370,11 +373,7 @@ export class Battleship {
         return res.status(400).send('Missing attack data');
       }
 
-      console.log(
-        `Team ${team.name} is attacking cell (${attack.x}, ${attack.y}) by user: ${attack.rsn}`
-      );
       attack.hit = this.isCellOccupied(attack, otherTeam.id);
-      console.log(`Attack result: ${attack.hit ? 'HIT' : 'MISS'}`);
       const board = this.data.teamBoards[team.id];
       if (!board) {
         return res.status(404).send('Team board not found');
@@ -384,6 +383,7 @@ export class Battleship {
         board.attacks = {};
       }
       board.attacks[getCellKey(attack)] = attack;
+      this.save(this.data);
 
       const ships = this.withHits(this.data.teamBoards[otherTeam.id].ships, {
         ...board.attacks,
@@ -395,7 +395,6 @@ export class Battleship {
         enemyShipsSunk: this.filterBySunkStatus(ships, true),
       };
 
-      this.save(this.data);
       return res.status(200).send(response);
     });
   }
