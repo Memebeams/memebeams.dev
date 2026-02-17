@@ -205,6 +205,7 @@ export class Battleship {
     ships: { [id: string]: TeamShip },
     attacks: Record<string, Attack>
   ) {
+    if (!attacks) return ships;
     const shipsWithHits: { [id: string]: TeamShip } = { ...ships };
     Object.values(shipsWithHits).forEach((ship) => {
       const squares = rotateSquares(ship.squares, ship.rotation);
@@ -390,6 +391,10 @@ export class Battleship {
         [getCellKey(attack)]: attack,
       });
 
+      // Try this change to avoid computing hits on get
+      // this.data.teamBoards[otherTeam.id].ships = ships;
+      // this.save(this.data);
+
       const response: AttackResponse = {
         attack,
         enemyShipsSunk: this.filterBySunkStatus(ships, true),
@@ -427,6 +432,12 @@ export class Battleship {
 
     return false;
   }
+
+  // TODO: add endpoint for shuffle
+  // public shuffle() {}
+
+  // TODO: add endpoint for unclaiming an attacked tile
+  // public unclaim() {}
 }
 
 export async function battleship(app: Express) {
