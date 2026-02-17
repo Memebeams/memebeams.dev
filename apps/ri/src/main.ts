@@ -15,7 +15,7 @@ app.use(express.json());
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
 const corsOptions = {
-  origin: [/localhost:\d+/, 'https://memebeams.github.io'],
+  origin: [/localhost:\d+/, /^https:\/\/memebeams\.github\.io\/?.*$/],
 };
 
 app.use(cors(corsOptions));
