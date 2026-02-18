@@ -79,6 +79,7 @@ export interface AttackResponse {
 
 export interface BattleshipData {
   eventPassword: string;
+  cutOffDate: string;
   hitSrc: string;
   missSrc: string;
   teams: Team[];
@@ -139,11 +140,11 @@ export class Battleship {
   public getBoard(app: Express) {
     app.get('/api/battleship/board', async (req, res) => {
       const token = req.headers['token'];
-      if (!token || typeof token !== 'string') {
-        return res.status(401).send('Missing token');
-      }
-
-      if (token === process.env['SYNC_KEY']) {
+      if (
+        !token ||
+        typeof token !== 'string' ||
+        token === process.env['SYNC_KEY']
+      ) {
         const board = this.data.board;
         const shipTypes = this.data.shipTypes;
         return res.status(200).json({ board, shipTypes });
@@ -333,6 +334,13 @@ export class Battleship {
         return res.status(400).send('Missing ship ID');
       }
 
+      if (this.data.cutOffDate) {
+        const cutOffDate = new Date(this.data.cutOffDate);
+        if (new Date() > cutOffDate) {
+          return res.status(403).send('Event has already started');
+        }
+      }
+
       this.data.teamBoards[team.id] = {
         ...board,
         ships: {
@@ -357,6 +365,10 @@ export class Battleship {
         return res.status(403).send('Invalid token');
       }
 
+      const board = this.data.teamBoards[team.id];
+      if (!board) {
+        return res.status(404).send('Team board not found');
+      }
       const otherTeam = this.data.teams.find((t) => t.id !== team.id);
       if (!otherTeam) {
         return res.status(404).send('Other team not found');
@@ -367,11 +379,14 @@ export class Battleship {
         return res.status(400).send('Missing attack data');
       }
 
-      attack.hit = this.isCellOccupied(attack, otherTeam.id);
-      const board = this.data.teamBoards[team.id];
-      if (!board) {
-        return res.status(404).send('Team board not found');
+      if (this.data.cutOffDate) {
+        const cutOffDate = new Date(this.data.cutOffDate);
+        if (new Date() < cutOffDate) {
+          return res.status(403).send('Event has not started yet');
+        }
       }
+
+      attack.hit = this.isCellOccupied(attack, otherTeam.id);
 
       if (!board.attacks) {
         board.attacks = {};
@@ -432,6 +447,13 @@ export class Battleship {
       const key = req.headers['token'];
       if (key !== process.env['SYNC_KEY']) {
         return res.status(401).send('Invalid token');
+      }
+
+      if (this.data.cutOffDate) {
+        const cutOffDate = new Date(this.data.cutOffDate);
+        if (new Date() > cutOffDate) {
+          return res.status(403).send('Event has already started');
+        }
       }
 
       // Shuffle cells on the board
