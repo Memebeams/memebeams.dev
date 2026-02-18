@@ -47,6 +47,7 @@ export enum ShipType {
   T = 't',
   P = 'p',
   L = 'l',
+  Z = 'z',
 }
 
 export interface Ship {
