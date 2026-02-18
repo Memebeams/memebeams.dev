@@ -442,7 +442,6 @@ export class Battleship {
     return false;
   }
 
-  // TODO: add endpoint for shuffle
   public shuffle(app: Express) {
     app.post('/api/battleship/admin/shuffle', async (req, res) => {
       const key = req.headers['token'];
@@ -475,8 +474,22 @@ export class Battleship {
     });
   }
 
-  // TODO: add endpoint for unclaiming an attacked tile
-  // public unclaim() {}
+  public reset(app: Express) {
+    app.post('/api/battleship/admin/reset', async (req, res) => {
+      const key = req.headers['token'];
+      if (key !== process.env['SYNC_KEY']) {
+        return res.status(401).send('Invalid token');
+      }
+
+      for (const teamBoard of Object.values(this.data.teamBoards)) {
+        teamBoard.ships = {};
+        teamBoard.attacks = {};
+      }
+
+      this.save(this.data);
+      return res.status(200).send('Game reset');
+    });
+  }
 }
 
 export async function battleship(app: Express) {
@@ -491,6 +504,7 @@ export async function battleship(app: Express) {
   battleship.updateShip(app);
   battleship.attack(app);
   battleship.shuffle(app);
+  battleship.reset(app);
 }
 
 export function getCellKey({ x, y }: { x: number; y: number }) {
