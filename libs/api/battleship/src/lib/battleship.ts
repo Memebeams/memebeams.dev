@@ -177,15 +177,19 @@ export class Battleship {
       let allyShipsNotSunk = this.filterBySunkStatus(ships, false);
       const allyShipsSunk = this.filterBySunkStatus(ships, true);
 
-      if (!isCaptain) {
-        allyShipsNotSunk = this.withoutCoords(allyShipsNotSunk);
+      let shipsToReturn = {
+        ...allyShipsSunk,
+      };
+
+      if (isCaptain) {
+        shipsToReturn = {
+          ...allyShipsNotSunk,
+          ...allyShipsSunk,
+        };
       }
 
       const teamBoardResponse: TeamBoardResponse = {
-        ships: {
-          ...allyShipsNotSunk,
-          ...allyShipsSunk,
-        },
+        ships: shipsToReturn,
         enemyShipsSunk,
         attacksByTeam: teamBoard.attacks,
         attacksOnTeam: otherTeamBoard.attacks,
@@ -234,17 +238,6 @@ export class Battleship {
       shipsWithHits[ship.id] = shipWithHits;
     });
     return shipsWithHits;
-  }
-
-  private withoutCoords(ships: { [id: string]: TeamShip }) {
-    const shipsWithoutCoords: { [id: string]: TeamShip } = { ...ships };
-    Object.keys(shipsWithoutCoords).forEach((shipId) => {
-      shipsWithoutCoords[shipId] = {
-        ...shipsWithoutCoords[shipId],
-        coords: undefined,
-      };
-    });
-    return shipsWithoutCoords;
   }
 
   private filterBySunkStatus(ships: { [id: string]: TeamShip }, sunk: boolean) {
@@ -434,7 +427,22 @@ export class Battleship {
   }
 
   // TODO: add endpoint for shuffle
-  // public shuffle() {}
+  public shuffle(app: Express) {
+    app.post('/api/battleship/admin/shuffle', async (req, res) => {
+      const key = req.headers['token'];
+      if (key !== process.env['SYNC_KEY']) {
+        return res.status(401).send('Invalid token');
+      }
+
+      // Shuffle cells on the board
+      const shuffledCells = [...this.data.board.cells].sort(
+        () => Math.random() - 0.5
+      );
+      this.data.board.cells = shuffledCells;
+      this.save(this.data);
+      return res.status(200).send({ board: this.data.board });
+    });
+  }
 
   // TODO: add endpoint for unclaiming an attacked tile
   // public unclaim() {}
@@ -451,6 +459,7 @@ export async function battleship(app: Express) {
   battleship.updateCell(app);
   battleship.updateShip(app);
   battleship.attack(app);
+  battleship.shuffle(app);
 }
 
 export function getCellKey({ x, y }: { x: number; y: number }) {
