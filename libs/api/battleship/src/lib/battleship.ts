@@ -16,7 +16,7 @@ export interface Team {
 export interface Board {
   width: number;
   height: number;
-  cells: Cell[];
+  cells: Cell[][];
   ships: { [key in ShipType]: number };
 }
 
@@ -456,11 +456,19 @@ export class Battleship {
         }
       }
 
-      // Shuffle cells on the board
-      const shuffledCells = [...this.data.board.cells].sort(
-        () => Math.random() - 0.5
-      );
-      this.data.board.cells = shuffledCells;
+      let flattened = this.data.board.cells.flat();
+      flattened = flattened.sort(() => Math.random() - 0.5);
+      const newCells: Cell[][] = [];
+      for (let i = 0; i < this.data.board.height; i++) {
+        const row = [];
+        for (let j = 0; j < this.data.board.width; j++) {
+          const cell = flattened[i * this.data.board.width + j];
+          row.push({ ...cell, x: j, y: i });
+        }
+        newCells.push(row);
+      }
+
+      this.data.board.cells = newCells;
       this.save(this.data);
       return res.status(200).send({ board: this.data.board });
     });
