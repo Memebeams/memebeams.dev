@@ -214,6 +214,8 @@ export class Battleship {
     if (!attacks) return ships;
     const shipsWithHits: { [id: string]: TeamShip } = { ...ships };
     Object.values(shipsWithHits).forEach((ship) => {
+          if (!ship.coords) return;
+          
       const squares = rotateSquares(ship.squares, ship.rotation);
       const center = getCenter(squares);
 
@@ -221,6 +223,7 @@ export class Battleship {
       for (const [rowIndex, row] of squares.entries()) {
         for (const [colIndex, square] of row.entries()) {
           if (!square.included) continue;
+          
           const cellCoords = {
             x: ship.coords.x - center.x + colIndex,
             y: ship.coords.y - center.y + rowIndex,
