@@ -73,6 +73,10 @@ export interface Attack {
   hit?: boolean;
 }
 
+export interface AdminAttack extends Attack {
+  attackingTeam: string;
+}
+
 export interface AttackResponse {
   attack: Attack;
   enemyShipsSunk: { [id: string]: TeamShip };
@@ -146,9 +150,7 @@ export class Battleship {
         typeof token !== 'string' ||
         token === process.env['SYNC_KEY']
       ) {
-        const board = this.data.board;
-        const shipTypes = this.data.shipTypes;
-        return res.status(200).json({ board, shipTypes });
+        return this.getAdminBoard(res);
       }
 
       const team = this.data.teams.find(
@@ -207,6 +209,22 @@ export class Battleship {
     });
   }
 
+  private getAdminBoard(res: any) {
+    const board = this.data.board;
+    const shipTypes = this.data.shipTypes;
+    const teamBoards = this.data.teams.reduce((acc, team) => {
+      const teamBoard = this.data.teamBoards[team.id];
+      if (teamBoard) {
+        acc[team.id] = {
+          ships: this.withHits(teamBoard.ships, teamBoard.attacks),
+          attacks: teamBoard.attacks,
+        };
+      }
+      return acc;
+    }, {} as { [teamId: string]: { ships: { [id: string]: TeamShip }; attacks: Record<string, Attack> } });
+    return res.status(200).json({ board, shipTypes, teamBoards });
+  }
+
   private withHits(
     ships: { [id: string]: TeamShip },
     attacks: Record<string, Attack>
@@ -214,8 +232,8 @@ export class Battleship {
     if (!attacks) return ships;
     const shipsWithHits: { [id: string]: TeamShip } = { ...ships };
     Object.values(shipsWithHits).forEach((ship) => {
-          if (!ship.coords) return;
-          
+      if (!ship.coords) return;
+
       const squares = rotateSquares(ship.squares, ship.rotation);
       const center = getCenter(squares);
 
@@ -223,7 +241,7 @@ export class Battleship {
       for (const [rowIndex, row] of squares.entries()) {
         for (const [colIndex, square] of row.entries()) {
           if (!square.included) continue;
-          
+
           const cellCoords = {
             x: ship.coords.x - center.x + colIndex,
             y: ship.coords.y - center.y + rowIndex,
@@ -416,6 +434,95 @@ export class Battleship {
     });
   }
 
+  public adminAttack(app: Express) {
+    app.post('/api/battleship/admin/attack', async (req, res) => {
+      const token = req.headers['token'];
+      if (!token || typeof token !== 'string') {
+        return res.status(401).send('Missing token');
+      }
+
+      if (token !== process.env['SYNC_KEY']) {
+        return res.status(403).send('Invalid token');
+      }
+
+      const attack: AdminAttack = req.body;
+      if (!attack.attackingTeam) {
+        return res.status(400).send('Missing attacking team');
+      }
+
+      const team = this.data.teams.find((t) => t.id === attack.attackingTeam);
+      if (!team) {
+        return res.status(404).send('Attacking team not found');
+      }
+
+      const board = this.data.teamBoards[team.id];
+      if (!board) {
+        return res.status(404).send('Team board not found');
+      }
+
+      const otherTeam = this.data.teams.find((t) => t.id !== team.id);
+      if (!otherTeam) {
+        return res.status(404).send('Other team not found');
+      }
+
+      if (attack.x === undefined || attack.y === undefined || !attack.rsn) {
+        return res.status(400).send('Missing attack data');
+      }
+
+      attack.hit = this.isCellOccupied(attack, otherTeam.id);
+
+      if (!board.attacks) {
+        board.attacks = {};
+      }
+      delete attack.attackingTeam;
+      board.attacks[getCellKey(attack)] = attack;
+      this.save(this.data);
+
+      const ships = this.withHits(this.data.teamBoards[otherTeam.id].ships, {
+        ...board.attacks,
+        [getCellKey(attack)]: attack,
+      });
+
+      // Try this change to avoid computing hits on get
+      // this.data.teamBoards[otherTeam.id].ships = ships;
+      // this.save(this.data);
+
+      const response: AttackResponse = {
+        attack,
+        enemyShipsSunk: this.filterBySunkStatus(ships, true),
+      };
+
+      return res.status(200).send(response);
+    });
+  }
+
+  public clearAttack(app: Express) {
+    app.delete('/api/battleship/admin/attack', async (req, res) => {
+      const token = req.headers['token'];
+      if (!token || typeof token !== 'string') {
+        return res.status(401).send('Missing token');
+      }
+
+      if (token !== process.env['SYNC_KEY']) {
+        return res.status(403).send('Invalid token');
+      }
+
+      const { x, y, teamId } = req.body;
+      if (x === undefined || y === undefined || !teamId) {
+        return res.status(400).send('Missing attack data');
+      }
+
+      const teamBoard = this.data.teamBoards[teamId];
+      if (!teamBoard) {
+        return res.status(404).send('Team board not found');
+      }
+
+      delete teamBoard.attacks[getCellKey({ x, y })];
+      this.save(this.data);
+      return res.status(200).send('Attack cleared');
+    });
+  }
+
   public isCellOccupied({ x, y }: { x: number; y: number }, teamId: string) {
     const teamBoard = this.data.teamBoards[teamId];
     if (!teamBoard) return false;
@@ -508,6 +615,8 @@ export async function battleship(app: Express) {
   battleship.attack(app);
   battleship.shuffle(app);
   battleship.reset(app);
+  battleship.clearAttack(app);
+  battleship.adminAttack(app);
 }
 
 export function getCellKey({ x, y }: { x: number; y: number }) {
