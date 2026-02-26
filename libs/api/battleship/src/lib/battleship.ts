@@ -32,6 +32,11 @@ export interface TeamBoardResponse {
   attacksByTeam: Record<string, Attack>;
 }
 
+export interface AdminTeamBoardResponse {
+  ships: { [id: string]: TeamShip };
+  attacksByTeam: Record<string, Attack>;
+}
+
 export interface Cell {
   x: number;
   y: number;
@@ -215,13 +220,14 @@ export class Battleship {
     const teamBoards = this.data.teams.reduce((acc, team) => {
       const teamBoard = this.data.teamBoards[team.id];
       if (teamBoard) {
-        acc[team.id] = {
+        const teamBoardResponse: AdminTeamBoardResponse = {
           ships: this.withHits(teamBoard.ships, teamBoard.attacks),
-          attacks: teamBoard.attacks,
+          attacksByTeam: teamBoard.attacks,
         };
+        acc[team.id] = teamBoardResponse;
       }
       return acc;
-    }, {} as { [teamId: string]: { ships: { [id: string]: TeamShip }; attacks: Record<string, Attack> } });
+    }, {} as { [teamId: string]: AdminTeamBoardResponse });
     return res.status(200).json({ board, shipTypes, teamBoards });
   }
 
