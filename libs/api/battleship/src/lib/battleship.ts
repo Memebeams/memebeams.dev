@@ -3,6 +3,9 @@ import { Express } from 'express';
 import { existsSync } from 'fs';
 import { readFile, writeFile } from 'fs/promises';
 import * as path from 'path';
+import * as fs from 'fs';
+import JSZip from 'jszip';
+import { CronJob } from 'cron';
 
 export interface Team {
   id: string;
@@ -606,6 +609,95 @@ export class Battleship {
       return res.status(200).send('Game reset');
     });
   }
+
+  public async snapshot() {
+    const dateSuffix = new Date().toISOString().replace(/[:.]/g, '-');
+    const file = path.join(
+      this.config.dataPath,
+      `/battleship-${dateSuffix}.json`
+    );
+    await writeFile(file, JSON.stringify(this.data, null, 2));
+  }
+
+  public manualSnapshot(app: Express) {
+    app.post('/api/battleship/admin/snapshots', async (req, res) => {
+      const key = req.headers['token'];
+      if (key !== process.env['SYNC_KEY']) {
+        return res.status(401).send('Invalid token');
+      }
+
+      await this.snapshot();
+      return res.status(200).send('Snapshot saved');
+    });
+  }
+
+  public downloadSnapshots(app: Express) {
+    // download zip file with all snapshots
+    app.get('/api/battleship/admin/snapshots', async (req, res) => {
+      const key = req.headers['token'];
+      if (key !== process.env['SYNC_KEY']) {
+        return res.status(401).send('Invalid token');
+      }
+
+      const snapshotsDir = this.config.dataPath;
+      const files = await fs.promises.readdir(snapshotsDir);
+      const snapshotFiles = files.filter(
+        (file) => file.startsWith('battleship-') && file.endsWith('.json')
+      );
+
+      if (snapshotFiles.length === 0) {
+        return res.status(404).send('No snapshots found');
+      }
+
+      const zip = new JSZip();
+      for (const file of snapshotFiles) {
+        const filePath = path.join(snapshotsDir, file);
+        const content = await fs.promises.readFile(filePath);
+        zip.file(file, content);
+      }
+
+      const zipContent = await zip.generateAsync({ type: 'nodebuffer' });
+      res.set('Content-Type', 'application/zip');
+      res.set(
+        'Content-Disposition',
+        `attachment; filename="battleship-snapshots-${new Date()
+          .toISOString()
+          .replace(/[:.]/g, '-')}.zip"`
+      );
+      res.send(zipContent);
+    });
+  }
+
+  public setUpSnapshotCron() {
+    // Run daily at midnight Eastern Time until 2026-03-16 (inclusive).
+    const cutoffDateStr = '2026-03-16'; // YYYY-MM-DD (inclusive)
+
+    let job: CronJob;
+    job = new CronJob(
+      '0 0 * * *',
+      () => {
+        // Get current date in America/New_York as YYYY-MM-DD
+        const todayInET = new Date().toLocaleDateString('en-US', {
+          timeZone: 'America/New_York',
+        });
+
+        // If current date (ET) is after the cutoff, stop the job.
+        if (todayInET > cutoffDateStr) {
+          job.stop();
+          return;
+        }
+
+        this.snapshot().catch((err) => {
+          console.error('Failed to create snapshot:', err);
+        });
+      },
+      null,
+      false,
+      'America/New_York'
+    );
+
+    job.start();
+  }
 }
 
 export async function battleship(app: Express) {
@@ -623,6 +715,9 @@ export async function battleship(app: Express) {
   battleship.reset(app);
   battleship.clearAttack(app);
   battleship.adminAttack(app);
+  battleship.manualSnapshot(app);
+  battleship.downloadSnapshots(app);
+  battleship.setUpSnapshotCron();
 }
 
 export function getCellKey({ x, y }: { x: number; y: number }) {
