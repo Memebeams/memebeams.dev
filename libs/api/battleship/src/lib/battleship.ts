@@ -676,13 +676,11 @@ export class Battleship {
     job = new CronJob(
       '0 0 * * *',
       () => {
-        // Get current date in America/New_York as YYYY-MM-DD
-        const todayInET = new Date().toLocaleDateString('en-US', {
-          timeZone: 'America/New_York',
-        });
+        const today = new Date();
+        const cutoff = new Date(cutoffDateStr);
 
         // If current date (ET) is after the cutoff, stop the job.
-        if (todayInET > cutoffDateStr) {
+        if (today > cutoff) {
           job.stop();
           return;
         }
