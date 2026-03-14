@@ -1,11 +1,11 @@
 import exp = require('constants');
+import { CronJob } from 'cron';
 import { Express } from 'express';
+import * as fs from 'fs';
 import { existsSync } from 'fs';
 import { readFile, writeFile } from 'fs/promises';
-import * as path from 'path';
-import * as fs from 'fs';
 import JSZip from 'jszip';
-import { CronJob } from 'cron';
+import * as path from 'path';
 
 export interface Team {
   id: string;
@@ -93,6 +93,7 @@ export interface AttackResponse {
 export interface BattleshipData {
   eventPassword: string;
   cutOffDate: string;
+  endDate: string;
   hitSrc: string;
   missSrc: string;
   teams: Team[];
@@ -210,6 +211,8 @@ export class Battleship {
       return res.status(200).json({
         board,
         teamBoard: teamBoardResponse,
+        cutOffDate: this.data.cutOffDate,
+        endDate: this.data.endDate,
         shipTypes,
         hitSrc,
         missSrc,
@@ -414,6 +417,13 @@ export class Battleship {
         const cutOffDate = new Date(this.data.cutOffDate);
         if (new Date() < cutOffDate) {
           return res.status(403).send('Event has not started yet');
+        }
+      }
+
+      if (this.data.endDate) {
+        const endDate = new Date(this.data.endDate);
+        if (new Date() > endDate) {
+          return res.status(403).send('Event has already ended');
         }
       }
 
@@ -670,14 +680,14 @@ export class Battleship {
 
   public setUpSnapshotCron() {
     // Run daily at midnight Eastern Time until 2026-03-16 (inclusive).
-    const cutoffDateStr = '2026-03-16'; // YYYY-MM-DD (inclusive)
+    const endDateStr = this.data.endDate || '2026-03-16'; // YYYY-MM-DD (inclusive)
 
     let job: CronJob;
     job = new CronJob(
       '0 0 * * *',
       () => {
         const today = new Date();
-        const cutoff = new Date(cutoffDateStr);
+        const cutoff = new Date(endDateStr);
 
         // If current date (ET) is after the cutoff, stop the job.
         if (today > cutoff) {
